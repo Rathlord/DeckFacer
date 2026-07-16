@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeckFacer</title>
+<link rel="stylesheet" href="/app.css">
+<style id="card-style"></style>
+</head>
+<body>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <header class="topbar glass">
+    <div class="brand">
+      <span class="brand-mark">⌗</span>
+      <span class="brand-name">DeckFacer</span>
+    </div>
+    <div class="topbar-spacer"></div>
+    <label class="out-field">
+      <span>Output file</span>
+      <input id="outName" type="text" value="deck_cards.html" spellcheck="false">
+    </label>
+    <button id="generateBtn" class="btn btn-primary">Generate cards</button>
+  </header>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <div class="layout">
+    <aside class="panel glass">
+
+      <section class="panel-section">
+        <h2>Deck selection</h2>
+        <label class="toggle">
+          <input type="checkbox" id="allFormats">
+          <span>Include non-Commander decks</span>
+        </label>
+      </section>
+
+      <section class="panel-section">
+        <h2>Paper &amp; layout</h2>
+        <label class="field">
+          <span>Paper</span>
+          <select id="paper">
+            <option value="letter">US Letter</option>
+            <option value="a4">A4</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Card gap <b id="gapVal">3.0</b> mm</span>
+          <input type="range" id="gap" min="0" max="8" step="0.5" value="3">
+        </label>
+        <label class="field">
+          <span>Card scale <b id="scaleVal">1.00</b>&times;</span>
+          <input type="range" id="cardScale" min="0.7" max="1.0" step="0.01" value="1.0">
+        </label>
+        <p id="layoutNote" class="note-text" hidden></p>
+      </section>
+
+      <section class="panel-section">
+        <h2>Card content</h2>
+        <label class="toggle">
+          <input type="checkbox" id="useArt" checked>
+          <span>Faded art background</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="showPrice">
+          <span>Approx. TCGplayer price</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="useQr" checked>
+          <span>QR code (vs. printed link)</span>
+        </label>
+      </section>
+
+      <section class="panel-section">
+        <h2>Import</h2>
+        <label class="field">
+          <span>Archidekt username</span>
+          <div class="row">
+            <input type="text" id="importUser" placeholder="username" spellcheck="false">
+            <button id="importUserBtn" class="btn btn-ghost">Import</button>
+          </div>
+        </label>
+        <label class="field">
+          <span>Paste deck URLs / IDs (one per line)</span>
+          <textarea id="importPaste" rows="4" placeholder="https://archidekt.com/decks/123456/...&#10;789012"></textarea>
+        </label>
+        <button id="importPasteBtn" class="btn btn-ghost btn-block">Add to sheet</button>
+      </section>
+
+      <section class="panel-section panel-hint">
+        <p>Click any empty slot to paste a deck link. Drag filled cards to reorder them.</p>
+      </section>
+    </aside>
+
+    <main class="preview-wrap">
+      <div id="sheets"></div>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -5,8 +5,12 @@ decks. Output is a self-contained HTML file laid out as 3x3 grids of cards; the 
 prints it to PDF and cuts them out to label ~100 Commander decks.
 
 Main script: `archidekt_deck_cards.py` (pure Python 3 stdlib; optional `segno` for QR).
+A local browser GUI (`gui_server.py` + `gui/`) covers the same functionality
+with a live preview, also stdlib-only on the backend and vanilla JS/CSS on
+the frontend — no new pip dependencies either way.
 
 ## Run it
+CLI:
 ```
 pip install segno                                  # optional, enables QR codes
 python3 archidekt_deck_cards.py --user <ArchidektName>     # all public Commander decks
@@ -18,6 +22,13 @@ with **Margins: None** and **Background graphics: on**.
 
 Key flags: `--all-formats`, `--a4`, `--no-art`, `--price`, `--no-qr`,
 `--gap <mm>` (default 3), `--card-scale <float>` (e.g. 0.93).
+
+GUI (all of the above as toggles, plus click-to-assign deck slots and a live
+preview built from the same render functions as the CLI):
+```
+python3 archidekt_deck_cards.py --gui [--port 8765]
+```
+Opens `http://127.0.0.1:<port>/` in the default browser.
 
 ## What each card shows
 Commander(s) (partners handled), EDH bracket badge (1-5 w/ name), WUBRG color pips,
@@ -56,8 +67,35 @@ stack of decks is sortable by color.
   full-length centered line never crosses a card.
 - `enumerate_user_decks()` — paginates the v3 list endpoint.
 - `extract_info()` — pulls commander/colors/bracket/count/price from deck JSON.
-- `render_card()` / `render_html()` — build the HTML/CSS (inline styles, print @page).
+- `render_card()` — builds one card's markup. `card_css()` — the full stylesheet,
+  parameterized by `layout_metrics()` output; factored out of `render_html()`
+  specifically so the GUI can embed byte-identical CSS in its live preview.
+  `sheets_html()` — chunks cards into 9-up `.sheet` blocks. `render_html()` —
+  assembles the full print document from the above.
 - `qr_data_uri()` — segno SVG data-URI QR (falls back to text link if segno absent).
+
+## GUI architecture (`gui_server.py`, `gui/`)
+- **Why a local server, not a static page:** the same CORS restriction noted
+  above applies to the GUI — a page can't fetch Archidekt decks client-side.
+  `gui_server.py` is a stdlib `http.server.ThreadingHTTPServer` that fetches
+  deck JSON server-side (reusing `fetch_json`/`extract_info` from the CLI
+  module) and hands the browser JSON over same-origin requests.
+- The live preview is not a JS reimplementation of the card design — the
+  server renders real `render_card()`/`card_css()`/`cropmarks_html()` output
+  and the frontend just injects it into the DOM. What you see in the browser
+  is built from the exact code that produces the printed file.
+- In-memory `_CACHE` (keyed by deck id) in `gui_server.py` means toggling
+  art/price/QR/paper/gap/scale re-renders from cached deck info instantly,
+  without re-hitting Archidekt.
+- API surface: `/api/resolve` (one deck), `/api/bulk` (paced list, for
+  paste-import or `--user`-style bulk add), `/api/user-decks` (id listing via
+  `enumerate_user_decks`), `/api/layout` (CSS + crop-line geometry for a given
+  paper/gap/scale), `/api/rerender` (cheap art/price/QR-only re-render from
+  cache), `/api/render` (writes the final `deck_cards.html`-equivalent to
+  disk, same as the CLI, served back at `/output/<name>`).
+- `gui/app.js` keeps deck slots as a dense ordered list (no positional holes);
+  a virtual trailing "add deck" tile is appended only at render time. Reorder
+  is native HTML5 drag-and-drop; no drag/UI library used.
 
 ## Possible next steps discussed
 - QR could point to the playtest/sandbox view or a Moxfield mirror instead.

@@ -1,0 +1,295 @@
+:root {
+  --bg: #0e1016;
+  --ink: #e9ebf3;
+  --ink-dim: #9aa0b4;
+  --accent: #7c9cff;
+  --accent-2: #b98af0;
+  --danger: #ff6b7a;
+  --ok: #5fd8a3;
+  --glass-bg: rgba(28, 31, 46, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --radius: 16px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+}
+
+.bg-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(700px circle at 12% 8%, rgba(124, 156, 255, 0.22), transparent 60%),
+    radial-gradient(600px circle at 88% 18%, rgba(185, 138, 240, 0.18), transparent 55%),
+    radial-gradient(900px circle at 50% 100%, rgba(95, 216, 163, 0.10), transparent 60%);
+}
+
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+/* ---- topbar ---- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; letter-spacing: .01em; }
+.brand-mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #0e1016; font-weight: 800;
+}
+.brand-name { font-size: 16px; }
+.topbar-spacer { flex: 1; }
+
+.out-field {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--ink-dim);
+}
+.out-field input {
+  width: 190px;
+}
+
+/* ---- layout ---- */
+.layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 20px;
+}
+
+.panel {
+  position: sticky;
+  top: 78px;
+  width: 300px;
+  flex: none;
+  border-radius: var(--radius);
+  padding: 18px;
+  max-height: calc(100vh - 98px);
+  overflow-y: auto;
+}
+
+.panel-section { margin-bottom: 20px; }
+.panel-section:last-child { margin-bottom: 0; }
+.panel-section h2 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink-dim); margin: 0 0 10px;
+  font-weight: 700;
+}
+.panel-hint p { font-size: 12px; color: var(--ink-dim); line-height: 1.5; margin: 0; }
+
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; margin-bottom: 12px; }
+.field:last-child { margin-bottom: 0; }
+.field > span { color: var(--ink-dim); display: flex; justify-content: space-between; }
+.field .row { display: flex; gap: 6px; }
+.field .row input { flex: 1; }
+
+.toggle {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; margin-bottom: 10px; cursor: pointer;
+  user-select: none;
+}
+.toggle:last-child { margin-bottom: 0; }
+.toggle input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+input[type="text"], select, textarea {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--ink);
+  padding: 7px 9px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+input[type="text"]:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+}
+textarea { resize: vertical; }
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.note-text {
+  font-size: 11.5px; color: #f2c078; line-height: 1.4;
+  background: rgba(242, 192, 120, 0.10);
+  border: 1px solid rgba(242, 192, 120, 0.25);
+  border-radius: 8px; padding: 8px 10px; margin: 10px 0 0;
+}
+
+.btn {
+  border: 1px solid var(--glass-border);
+  border-radius: 9px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+  transition: transform .08s ease, background .15s ease;
+}
+.btn:hover { background: rgba(255, 255, 255, 0.12); }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: .5; cursor: default; transform: none; }
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border: none; color: #0e1016;
+}
+.btn-primary:hover { filter: brightness(1.08); background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.btn-ghost { background: rgba(255, 255, 255, 0.04); }
+.btn-block { width: 100%; margin-top: 8px; }
+
+/* ---- toast ---- */
+.toast {
+  position: fixed;
+  top: 74px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  max-width: 560px;
+  background: rgba(28, 31, 46, 0.9);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(12px);
+}
+.toast.ok { border-color: rgba(95, 216, 163, 0.4); color: var(--ok); }
+.toast.err { border-color: rgba(255, 107, 122, 0.4); color: var(--danger); }
+
+/* ---- preview area ---- */
+.preview-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+/* card-wrap sits around each server-rendered .card so we can add GUI-only
+   chrome (edit/remove/drag) without touching the print markup itself. */
+.card-wrap {
+  position: relative;
+}
+.card-wrap[draggable="true"] { cursor: grab; }
+.card-wrap.drag-over::after {
+  content: "";
+  position: absolute; inset: -3px;
+  border: 2px dashed var(--accent);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.card-actions {
+  position: absolute; top: 4px; right: 4px; z-index: 8;
+  display: flex; gap: 4px;
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+.card-wrap:hover .card-actions { opacity: 1; }
+.card-actions button {
+  width: 20px; height: 20px;
+  border-radius: 5px;
+  border: none;
+  background: rgba(14, 16, 22, 0.72);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.card-actions button:hover { background: rgba(14, 16, 22, 0.92); }
+.card-actions .remove:hover { color: var(--danger); }
+
+.card-tag {
+  position: absolute; left: 4px; bottom: 4px; z-index: 8;
+  font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  padding: 2px 6px; border-radius: 999px;
+  background: rgba(242, 192, 120, 0.92); color: #241a04;
+}
+
+/* placeholder / edit slots -- same box size as a real .card via CSS vars
+   injected server-side, so they line up exactly in the grid. */
+.slot-placeholder, .slot-edit, .slot-error {
+  width: var(--card-w); height: var(--card-h);
+  border-radius: 3px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; text-align: center; padding: 10px;
+  font-size: 11px;
+}
+.slot-placeholder {
+  border: 1.5px dashed rgba(255, 255, 255, 0.22);
+  color: var(--ink-dim);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.03);
+  transition: background .12s ease, border-color .12s ease;
+}
+.slot-placeholder:hover {
+  background: rgba(124, 156, 255, 0.10);
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.slot-placeholder .plus { font-size: 22px; line-height: 1; color: var(--accent); }
+
+.slot-edit {
+  border: 1.5px solid var(--accent);
+  background: rgba(124, 156, 255, 0.10);
+  padding: 12px;
+}
+.slot-edit textarea {
+  width: 100%; height: 70%;
+  font-size: 11px;
+}
+.slot-edit .hint { color: var(--ink-dim); font-size: 10px; }
+
+.slot-loading {
+  width: var(--card-w); height: var(--card-h);
+  display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+}
+.spinner {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--accent);
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.slot-error {
+  border: 1.5px solid rgba(255, 107, 122, 0.5);
+  background: rgba(255, 107, 122, 0.08);
+  color: var(--danger);
+  cursor: pointer;
+}
+.slot-error .err-msg { font-size: 10px; opacity: .85; }

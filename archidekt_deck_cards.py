@@ -402,24 +402,14 @@ def cropmarks_html(m):
     return "".join(marks)
 
 
-def render_html(cards, paper="letter", use_art=True, show_price=False, use_qr=True,
-                gap_mm=3.0, card_scale=1.0):
-    per_page = 9
-    page_size = "A4" if paper == "a4" else "letter"
-    m = layout_metrics(paper, gap_mm, card_scale)
-    crop_html = cropmarks_html(m)
+def card_css(m, page_size):
+    """The full card/sheet stylesheet, parameterized by layout_metrics() output.
 
-    sheets = []
-    for i in range(0, len(cards), per_page):
-        chunk = cards[i:i + per_page]
-        body = "".join(render_card(c, use_art, show_price, use_qr) for c in chunk)
-        sheets.append(f'<div class="sheet">{crop_html}{body}</div>')
-    sheets_html = "\n".join(sheets)
-
-    return f"""<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
-<title>Deck Info Cards</title>
-<style>
+    Factored out so the GUI's live preview can embed byte-for-byte the same
+    CSS as the generated print file -- what you see in the browser preview
+    is exactly what render_html() will produce.
+    """
+    return f"""
   :root {{
     --card-w: {m["cw"]:.4f}in; --card-h: {m["ch"]:.4f}in;
   }}
@@ -533,7 +523,29 @@ def render_html(cards, paper="letter", use_art=True, show_price=False, use_qr=Tr
 
   .note {{ max-width: 7.5in; margin: 16px auto; font-size: 13px; color: #444; }}
   @media print {{ .note {{ display: none; }} }}
-</style></head>
+"""
+
+
+def sheets_html(cards, use_art, show_price, use_qr, m):
+    """Render <div class="sheet">...</div> blocks, 9 cards per sheet."""
+    crop_html = cropmarks_html(m)
+    sheets = []
+    for i in range(0, len(cards), 9):
+        chunk = cards[i:i + 9]
+        body = "".join(render_card(c, use_art, show_price, use_qr) for c in chunk)
+        sheets.append(f'<div class="sheet">{crop_html}{body}</div>')
+    return "\n".join(sheets)
+
+
+def render_html(cards, paper="letter", use_art=True, show_price=False, use_qr=True,
+                gap_mm=3.0, card_scale=1.0):
+    page_size = "A4" if paper == "a4" else "letter"
+    m = layout_metrics(paper, gap_mm, card_scale)
+
+    return f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Deck Info Cards</title>
+<style>{card_css(m, page_size)}</style></head>
 <body>
   <div class="note">
     <strong>{len(cards)} deck card(s).</strong> To print: use your browser's
@@ -544,7 +556,7 @@ def render_html(cards, paper="letter", use_art=True, show_price=False, use_qr=Tr
     Cut along the light borders, using the faint dashed guide lines in the
     gaps to keep interior cuts straight.
   </div>
-  {sheets_html}
+  {sheets_html(cards, use_art, show_price, use_qr, m)}
 </body></html>"""
 
 
@@ -566,7 +578,15 @@ def main():
                     help="Space between cards in mm (auto-fit to page; default 3).")
     ap.add_argument("--card-scale", type=float, default=1.0,
                     help="Scale cards (e.g. 0.93) to allow larger even gaps. Default 1.0 = true size.")
+    ap.add_argument("--gui", action="store_true",
+                    help="Launch the local browser GUI instead of running from the command line.")
+    ap.add_argument("--port", type=int, default=8765, help="Port for --gui's local server.")
     args = ap.parse_args()
+
+    if args.gui:
+        import gui_server
+        gui_server.run(port=args.port)
+        return
 
     if not args.no_qr and not HAVE_SEGNO:
         print("Note: `segno` isn't installed, so cards will show a printed link "
