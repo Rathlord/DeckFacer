@@ -621,7 +621,7 @@ def card_css(m, page_size):
   .dname {{ margin-top: 5px; font-size: 9.5px; font-style: italic; color: #46433d;
             display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }}
   .desc {{ margin-top: 4px; font-size: 7.8px; line-height: 1.25; color: #57534a;
-           display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }}
+           display:-webkit-box; -webkit-line-clamp:6; -webkit-box-orient:vertical; overflow:hidden; }}
 
   /* text-halo option: a soft white glow behind every letter, so text stays
      readable regardless of what's showing through the art behind it. */
