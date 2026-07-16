@@ -20,8 +20,12 @@ python3 archidekt_deck_cards.py 11424116 <deck-url> ...   # ad-hoc IDs/URLs
 Then open the generated `deck_cards.html` in a browser → Print → Save as PDF,
 with **Margins: None** and **Background graphics: on**.
 
-Key flags: `--all-formats`, `--a4`, `--no-art`, `--price`, `--no-qr`,
-`--gap <mm>` (default 3), `--card-scale <float>` (e.g. 0.93).
+Key flags: `--all-formats`, `--a4`, `--gap <mm>` (default 3), `--card-scale <float>`
+(e.g. 0.93). Card content/style flags (one per `DEFAULT_CARD_OPTS` entry, see
+Code map): `--art-opacity <0-1>` (default 0.45), `--no-art` (shorthand for
+opacity 0), `--text-halo`, `--feature-deck-name`, `--no-spine`, `--no-pips`,
+`--no-bracket`, `--no-tags`, `--no-identity`, `--no-format`, `--no-count`,
+`--no-owner`, `--price`, `--description`, `--no-qr`.
 
 GUI (all of the above as toggles, plus click-to-assign deck slots and a live
 preview built from the same render functions as the CLI):
@@ -31,10 +35,16 @@ python3 archidekt_deck_cards.py --gui [--port 8765]
 Opens `http://127.0.0.1:<port>/` in the default browser.
 
 ## What each card shows
-Commander(s) (partners handled), EDH bracket badge (1-5 w/ name), WUBRG color pips,
+Commander(s) or deck name as the big title (toggle which via `feature`), EDH
+bracket badge (1-5 w/ name), WUBRG mana-symbol pips (simple geometric icons —
+sun/droplet/skull/flame/tree/hex — not lookalikes of WotC's actual glyphs),
 color-identity name (guild/shard/wedge/"Non-X"/Five-Color), format, card count,
-deck tags, owner, a QR code linking to the deck, and a left-edge color spine so a
-stack of decks is sortable by color.
+deck tags, an optional short description, owner, a QR code linking to the deck,
+and a left-edge color spine so a stack of decks is sortable by color. Every one
+of these is independently togglable (`show_spine`, `show_pips`, etc. in
+`DEFAULT_CARD_OPTS`) in both the CLI and GUI. A featured-art background is
+optional (opacity slider, 0 = off) with an optional text-halo (white glow
+behind all card text) for legibility over busy art.
 
 ## Archidekt API notes (undocumented and NOT stable — see 2026-07-16 breakage below; be polite — light use, link back)
 - Single deck JSON: `https://archidekt.com/api/decks/{id}/`
@@ -69,6 +79,16 @@ stack of decks is sortable by color.
   For larger even gaps use `--a4` or `--card-scale 0.93`. Layout uses `@page
   margin:0` and centers the page-sized `.sheet` grid, so print margins must be None.
 - Decks must be Public (or pass exact IDs for Unlisted). Private decks need a login.
+- **Card readability over art has two independent layers, deliberately no color
+  wash anymore:** an early version also blended a per-color-identity gradient
+  ("wash") between the art and a white veil; it was removed (user disliked it,
+  and stacked with the veil it made the art nearly invisible anyway -- verified
+  by simulating the exact opacity compositing in Pillow against a real deck's
+  art, see git history around 2026-07-16). Readability now comes from (a) the
+  fixed `::after` white gradient veil in `card_css()` (30-80% top-to-bottom,
+  tuned so it doesn't fully wash out a user-raised art opacity), and (b)
+  the optional per-card `text_halo` option (white text-shadow glow), which the
+  user controls directly instead of it being baked into a fixed wash.
 
 ## Code map
 - `layout_metrics()` — paper/card/gap math with clamping.
@@ -77,12 +97,27 @@ stack of decks is sortable by color.
   geometry; gap columns/rows are empty page background all the way through, so a
   full-length centered line never crosses a card.
 - `enumerate_user_decks()` — paginates the v3 list endpoint.
-- `extract_info()` — pulls commander/colors/bracket/count/price from deck JSON.
-- `render_card()` — builds one card's markup. `card_css()` — the full stylesheet,
-  parameterized by `layout_metrics()` output; factored out of `render_html()`
-  specifically so the GUI can embed byte-identical CSS in its live preview.
-  `sheets_html()` — chunks cards into 9-up `.sheet` blocks. `render_html()` —
-  assembles the full print document from the above.
+- `extract_info()` — pulls commander/colors/bracket/count/price/description from
+  deck JSON. `extract_description()` — Archidekt stores the description as
+  Quill Delta JSON (`{"ops":[{"insert":"text"},...]}`, a rich-text-editor
+  format), not plain text; this concatenates the string `insert` fragments.
+- `DEFAULT_CARD_OPTS` / `card_opts(overrides)` — the single source of truth for
+  every card content/style toggle (art opacity, text halo, feature, and one
+  `show_*` bool per field). CLI flags, GUI checkboxes, and `render_card()`'s
+  conditionals all key off these same names -- `card_opts()` merges a partial
+  dict over the defaults, dropping unknown/None keys, so the GUI can send one
+  combined flags object that also happens to carry unrelated layout/file
+  fields (`paper`, `gap`, `out`, ...) without needing to filter them itself.
+- `render_card(info, opts)` — builds one card's markup. `card_css()` — the full
+  stylesheet, parameterized by `layout_metrics()` output; factored out of
+  `render_html()` specifically so the GUI can embed byte-identical CSS in its
+  live preview. `sheets_html()` — chunks cards into 9-up `.sheet` blocks.
+  `render_html()` — assembles the full print document from the above.
+- `PIP_ICONS` — inline SVG mana-symbol icons (24x24 viewBox, plain geometric
+  shapes, `fill="currentColor"` so they follow the pip's own color; the
+  two-tone ones -- skull's eye/nose/teeth cutouts, flame's inner tongue --
+  take a `{bg}` format placeholder for the pip's background color, since that
+  can't be expressed as `currentColor`).
 - `qr_data_uri()` — segno SVG data-URI QR (falls back to text link if segno absent).
 
 ## GUI architecture (`gui_server.py`, `gui/`)
@@ -95,15 +130,19 @@ stack of decks is sortable by color.
   server renders real `render_card()`/`card_css()`/`cropmarks_html()` output
   and the frontend just injects it into the DOM. What you see in the browser
   is built from the exact code that produces the printed file.
-- In-memory `_CACHE` (keyed by deck id) in `gui_server.py` means toggling
-  art/price/QR/paper/gap/scale re-renders from cached deck info instantly,
-  without re-hitting Archidekt.
+- In-memory `_CACHE` (keyed by deck id) in `gui_server.py` means toggling any
+  `DEFAULT_CARD_OPTS` field, or paper/gap/scale, re-renders from cached deck
+  info instantly without re-hitting Archidekt.
 - API surface: `/api/resolve` (one deck), `/api/bulk` (paced list, for
   paste-import or `--user`-style bulk add), `/api/user-decks` (id listing via
   `enumerate_user_decks`), `/api/layout` (CSS + crop-line geometry for a given
-  paper/gap/scale), `/api/rerender` (cheap art/price/QR-only re-render from
-  cache), `/api/render` (writes the final `deck_cards.html`-equivalent to
-  disk, same as the CLI, served back at `/output/<name>`).
+  paper/gap/scale), `/api/rerender` (cheap re-render of any card-content
+  option from cache, no Archidekt refetch), `/api/render` (writes the final
+  `deck_cards.html`-equivalent to disk, same as the CLI, served back at
+  `/output/<name>`). All of these except `/api/layout` pass their `flags`
+  payload straight to `core.card_opts()` -- the JSON keys the GUI sends
+  (`art_opacity`, `show_bracket`, etc.) are exactly `DEFAULT_CARD_OPTS`'s
+  keys, no server-side name translation.
 - `gui/app.js` keeps deck slots as a dense ordered list (no positional holes);
   a virtual trailing "add deck" tile is appended only at render time. Reorder
   is native HTML5 drag-and-drop; no drag/UI library used.

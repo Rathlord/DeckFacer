@@ -5,10 +5,13 @@ Commander decks. The output is a self-contained HTML file laid out as 3x3
 grids of cards — print it to PDF and cut them out to label a shelf of
 Commander decks.
 
-Each card shows: commander(s) (partners handled), EDH bracket badge (1-5 with
-name), WUBRG color pips, color-identity name (guild/shard/wedge/"Non-X"/
-Five-Color), format, card count, deck tags, owner, a QR code linking to the
-deck, and a left-edge color spine so a stack of decks is sortable by color.
+Each card shows: commander(s) or the deck name as the big title (your choice),
+EDH bracket badge (1-5 with name), WUBRG mana-symbol pips, color-identity name
+(guild/shard/wedge/"Non-X"/Five-Color), format, card count, deck tags, an
+optional short description, owner, a QR code linking to the deck, and a
+left-edge color spine so a stack of decks is sortable by color. Every one of
+those is independently toggleable, and the featured-art background's opacity
+is adjustable (with an optional white text-halo for legibility over busy art).
 
 ## Requirements
 
@@ -34,8 +37,12 @@ This writes `deck_cards.html` (override with `--out`). Open it in a browser
 Faint dashed guide lines run down the center of each gap between cards to
 help keep interior cuts straight.
 
-Key flags: `--all-formats`, `--a4`, `--no-art`, `--price`, `--no-qr`,
-`--gap <mm>` (default 3), `--card-scale <float>` (e.g. 0.93), `--out <file>`.
+Key flags: `--all-formats`, `--a4`, `--gap <mm>` (default 3), `--card-scale
+<float>` (e.g. 0.93), `--out <file>`. Card content/style: `--art-opacity
+<0-1>` (default 0.45, or `--no-art` for 0), `--text-halo`,
+`--feature-deck-name`, `--no-spine`, `--no-pips`, `--no-bracket`, `--no-tags`,
+`--no-identity`, `--no-format`, `--no-count`, `--no-owner`, `--price`,
+`--description`, `--no-qr`.
 
 Decks must be Public (or pass exact IDs for Unlisted decks) — private decks
 require a login and can't be fetched.
@@ -64,9 +71,9 @@ server with Ctrl+C in the terminal it's running in.
   reorder them.
 - "Import" a username to bulk-add all their public decks, or paste a list
   of links/IDs and click "Add to sheet".
-- All CLI flags (paper size, gap, card scale, art/price/QR, Commander-only
-  filter, output filename) are toggles/sliders in the left panel and update
-  the preview live.
+- All CLI flags (paper size, gap, card scale, art opacity, text halo, big
+  title, every show/hide field, Commander-only filter, output filename) are
+  toggles/sliders in the left panel and update the preview live.
 - "Generate cards" writes the same kind of print-ready HTML file as the CLI
   and opens it in a new tab for printing.
 

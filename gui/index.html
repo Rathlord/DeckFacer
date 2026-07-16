@@ -58,10 +58,61 @@
       </section>
 
       <section class="panel-section">
-        <h2>Card content</h2>
+        <h2>Art &amp; style</h2>
+        <label class="field">
+          <span>Art opacity <b id="artOpacityVal">45</b>%</span>
+          <input type="range" id="artOpacity" min="0" max="100" step="5" value="45">
+        </label>
         <label class="toggle">
-          <input type="checkbox" id="useArt" checked>
-          <span>Faded art background</span>
+          <input type="checkbox" id="textHalo">
+          <span>Text halo (readable on busy art)</span>
+        </label>
+        <label class="field">
+          <span>Big title</span>
+          <select id="feature">
+            <option value="commander">Commander name</option>
+            <option value="deck">Deck name</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="panel-section">
+        <h2>Show on card</h2>
+        <label class="toggle">
+          <input type="checkbox" id="showSpine" checked>
+          <span>Color spine</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="showPips" checked>
+          <span>Mana-symbol pips</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="showBracket" checked>
+          <span>EDH bracket badge</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="showTags" checked>
+          <span>Deck tags</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="showDescription">
+          <span>Description</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="showIdentity" checked>
+          <span>Color identity name</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="showFormat" checked>
+          <span>Format</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="showCount" checked>
+          <span>Card count</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="showOwner" checked>
+          <span>Owner</span>
         </label>
         <label class="toggle">
           <input type="checkbox" id="showPrice">

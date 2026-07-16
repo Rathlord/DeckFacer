@@ -53,13 +53,6 @@ def _throttle():
     _LAST_FETCH = time.monotonic()
 
 
-def _card_flags(flags):
-    flags = flags or {}
-    return (bool(flags.get("use_art", True)),
-            bool(flags.get("show_price", False)),
-            bool(flags.get("use_qr", True)))
-
-
 def _resolve(token, flags=None, use_cache=True):
     did = core.parse_deck_id(token)
     if not did:
@@ -70,8 +63,7 @@ def _resolve(token, flags=None, use_cache=True):
             deck = core.fetch_json(core.API_DECK.format(id=did))
             _CACHE[did] = core.extract_info(deck)
         info = _CACHE[did]
-        use_art, show_price, use_qr = _card_flags(flags)
-        card_html = core.render_card(info, use_art, show_price, use_qr)
+        card_html = core.render_card(info, core.card_opts(flags))
         return {"ok": True, "token": token, "id": did, "info": info, "card_html": card_html}
     except urllib.error.HTTPError as e:
         return {"ok": False, "token": token, "id": did,
@@ -183,15 +175,14 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/rerender":
             ids = data.get("ids") or []
-            flags = data.get("flags")
-            use_art, show_price, use_qr = _card_flags(flags)
+            opts = core.card_opts(data.get("flags"))
             cards, missing = {}, []
             for did in ids:
                 if did not in _CACHE:
                     missing.append(did)
                     continue
                 try:
-                    cards[did] = core.render_card(_CACHE[did], use_art, show_price, use_qr)
+                    cards[did] = core.render_card(_CACHE[did], opts)
                 except Exception:  # noqa -- same guard as _resolve(): never kill the whole response
                     missing.append(did)
             self._send_json({"cards": cards, "missing": missing})
@@ -256,9 +247,7 @@ class Handler(BaseHTTPRequestHandler):
         html = core.render_html(
             cards,
             paper=paper,
-            use_art=bool(flags.get("use_art", True)),
-            show_price=bool(flags.get("show_price", False)),
-            use_qr=bool(flags.get("use_qr", True)),
+            opts=core.card_opts(flags),
             gap_mm=float(flags.get("gap", 3.0)),
             card_scale=float(flags.get("card_scale", 1.0)),
         )

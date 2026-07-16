@@ -81,10 +81,60 @@ PIP_STYLE = {
     "G": ("#2f8f52", "#ffffff"),
     "C": ("#9a938a", "#ffffff"),
 }
-# Softer versions used to tint the card background gradient.
-TINT = {
-    "W": "#efe7b0", "U": "#9bc0e6", "B": "#8f8f99",
-    "R": "#e59c86", "G": "#93cba6", "C": "#c9c2b7",
+
+# Small inline mana-symbol icons (sun/droplet/skull/flame/tree/hex), 24x24
+# viewBox, drawn as plain geometric shapes rather than lookalikes of WotC's
+# actual glyphs. Icon fill uses currentColor (so it follows the pip's own
+# `color`); the two icons with a two-tone "cutout" (skull's eyes/nose/teeth,
+# flame's inner tongue) take {bg} as their cutout fill, formatted in per pip
+# since that's a fixed per-color literal, not something CSS can express here.
+PIP_ICONS = {
+    "W": (
+        '<svg viewBox="0 0 24 24" width="11" height="11">'
+        '<g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">'
+        '<line x1="12" y1="7.4" x2="12" y2="2.8"/>'
+        '<line x1="15.25" y1="8.75" x2="18.5" y2="5.5"/>'
+        '<line x1="16.6" y1="12" x2="21.2" y2="12"/>'
+        '<line x1="15.25" y1="15.25" x2="18.5" y2="18.5"/>'
+        '<line x1="12" y1="16.6" x2="12" y2="21.2"/>'
+        '<line x1="8.75" y1="15.25" x2="5.5" y2="18.5"/>'
+        '<line x1="7.4" y1="12" x2="2.8" y2="12"/>'
+        '<line x1="8.75" y1="8.75" x2="5.5" y2="5.5"/>'
+        '</g><circle cx="12" cy="12" r="3.2" fill="currentColor"/></svg>'
+    ),
+    "U": (
+        '<svg viewBox="0 0 24 24" width="11" height="11">'
+        '<polygon points="12,3 5.92,14 18.08,14" fill="currentColor"/>'
+        '<circle cx="12" cy="14" r="6.2" fill="currentColor"/></svg>'
+    ),
+    "B": (
+        '<svg viewBox="0 0 24 24" width="11" height="11">'
+        '<ellipse cx="12" cy="9" rx="7" ry="6" fill="currentColor"/>'
+        '<polygon points="7,12 17,12 15.5,19 8.5,19" fill="currentColor"/>'
+        '<ellipse cx="9" cy="8.8" rx="1.7" ry="1.8" fill="{bg}"/>'
+        '<ellipse cx="15" cy="8.8" rx="1.7" ry="1.8" fill="{bg}"/>'
+        '<polygon points="11.3,10.6 12.7,10.6 12,13" fill="{bg}"/>'
+        '<rect x="9.3" y="17.2" width="0.9" height="1.8" fill="{bg}"/>'
+        '<rect x="11.6" y="17.2" width="0.9" height="1.8" fill="{bg}"/>'
+        '<rect x="13.9" y="17.2" width="0.9" height="1.8" fill="{bg}"/></svg>'
+    ),
+    "R": (
+        '<svg viewBox="0 0 24 24" width="11" height="11">'
+        '<polygon points="12.5,2 9,7 7.5,10.5 7,14 7.5,18 9.5,20.5 12.5,21.5 '
+        '15.5,20.5 17.5,18 18,14 17,10 14.5,6" fill="currentColor"/>'
+        '<polygon points="12.5,9 11,12 10.7,15 11.5,17.5 13,18.5 14.5,17 15,14 14,11" '
+        'fill="{bg}"/></svg>'
+    ),
+    "G": (
+        '<svg viewBox="0 0 24 24" width="11" height="11">'
+        '<polygon points="12,3 6,11 18,11" fill="currentColor"/>'
+        '<polygon points="12,8 5,17 19,17" fill="currentColor"/>'
+        '<rect x="10.7" y="17" width="2.6" height="4" fill="currentColor"/></svg>'
+    ),
+    "C": (
+        '<svg viewBox="0 0 24 24" width="11" height="11">'
+        '<polygon points="12,3 19,8 19,16 12,21 5,16 5,8" fill="currentColor"/></svg>'
+    ),
 }
 
 BRACKET_NAMES = {1: "Exhibition", 2: "Core", 3: "Upgraded", 4: "Optimized", 5: "cEDH"}
@@ -195,6 +245,22 @@ def enumerate_user_decks(username, commander_only):
     return ids
 
 
+def extract_description(deck):
+    """Archidekt stores the deck description as Quill Delta JSON (a rich-text
+    editor format): {"ops": [{"insert": "some text"}, ...]}. Concatenate the
+    plain-text insert fragments; skip non-string inserts (embeds/images)."""
+    raw = deck.get("description")
+    if not raw:
+        return ""
+    try:
+        delta = json.loads(raw)
+        ops = delta.get("ops") or []
+    except (TypeError, ValueError):
+        return str(raw).strip()  # not JSON -- already plain text, use as-is
+    text = "".join(op.get("insert", "") for op in ops if isinstance(op.get("insert"), str))
+    return text.strip()
+
+
 # --------------------------------------------------------------------------- #
 # Parsing a deck into the fields we print
 # --------------------------------------------------------------------------- #
@@ -264,33 +330,55 @@ def extract_info(deck):
         "owner": (deck.get("owner") or {}).get("username", ""),
         "featured": deck.get("featured") or "",
         "price": price,
+        "description": extract_description(deck),
     }
 
 
 # --------------------------------------------------------------------------- #
 # Rendering
 # --------------------------------------------------------------------------- #
+
+# Every render_card()/render_html() style choice lives in one options dict so
+# CLI flags, GUI checkboxes, and the render code all key off the same names.
+DEFAULT_CARD_OPTS = {
+    "art_opacity": 0.45,       # 0..1; 0 = no featured-art background at all
+    "text_halo": False,        # white glow behind text, for busy art
+    "feature": "commander",    # "commander" | "deck" -- which name is the big title
+    "show_spine": True,
+    "show_pips": True,
+    "show_bracket": True,
+    "show_tags": True,
+    "show_identity": True,
+    "show_format": True,
+    "show_count": True,
+    "show_owner": True,
+    "show_price": False,
+    "show_description": False,
+    "use_qr": True,
+}
+
+
+def card_opts(overrides=None):
+    """DEFAULT_CARD_OPTS merged with any provided overrides (missing/None keys
+    fall back to the default -- callers can pass a partial dict)."""
+    opts = dict(DEFAULT_CARD_OPTS)
+    for k, v in (overrides or {}).items():
+        if v is not None and k in DEFAULT_CARD_OPTS:
+            opts[k] = v
+    return opts
+
+
 def pip_html(colors):
     if not colors:
         colors = ["C"]
     out = []
     for w in colors:
         bg, fg = PIP_STYLE[w]
+        icon = PIP_ICONS[w].format(bg=bg)
         out.append(
-            f'<span class="pip" style="background:{bg};color:{fg}">{w}</span>'
+            f'<span class="pip" style="background:{bg};color:{fg}">{icon}</span>'
         )
     return "".join(out)
-
-
-def card_gradient(colors):
-    if not colors:
-        tints = [TINT["C"]]
-    else:
-        tints = [TINT[w] for w in colors]
-    if len(tints) == 1:
-        tints = tints + tints
-    stops = ", ".join(tints)
-    return f"linear-gradient(135deg, {stops})"
 
 
 def qr_data_uri(url):
@@ -301,48 +389,71 @@ def qr_data_uri(url):
     return qr.svg_data_uri(dark="#141210", light=None, border=2)
 
 
-def render_card(info, use_art, show_price, use_qr):
+def render_card(info, opts=None):
+    opts = card_opts(opts)
     commanders = info["commanders"] or ["(no commander set)"]
     cmd = " + ".join(commanders)
-    grad = card_gradient(info["colors"])
+
+    if opts["feature"] == "deck":
+        big_text, small_text = info["name"], cmd
+    else:
+        big_text, small_text = cmd, info["name"]
 
     art_layer = ""
-    if use_art and info["featured"]:
+    if opts["art_opacity"] > 0 and info["featured"]:
         art_layer = (
-            f'<div class="art" style="background-image:url(\'{html.escape(info["featured"])}\')"></div>'
+            f'<div class="art" style="background-image:url(\'{html.escape(info["featured"])}\');'
+            f'opacity:{opts["art_opacity"]:.3f}"></div>'
         )
 
     bracket = ""
-    if info["bracket"]:
+    if opts["show_bracket"] and info["bracket"]:
         bname = BRACKET_NAMES.get(info["bracket"], "")
         bracket = (
             f'<div class="bracket"><span class="bnum">{info["bracket"]}</span>'
             f'<span class="blabel">{html.escape(bname)}</span></div>'
         )
 
+    pips = f'<div class="pips">{pip_html(info["colors"])}</div>' if opts["show_pips"] else ""
+
     tags = ""
-    if info["tags"]:
+    if opts["show_tags"] and info["tags"]:
         chips = "".join(
             f'<span class="chip">{html.escape(t)}</span>' for t in info["tags"][:4]
         )
         tags = f'<div class="tags">{chips}</div>'
 
+    desc = ""
+    if opts["show_description"] and info["description"]:
+        desc = f'<div class="desc">{html.escape(info["description"])}</div>'
+
     price = ""
-    if show_price and info["price"]:
+    if opts["show_price"] and info["price"]:
         price = f'<span class="price">~${info["price"]:,.0f}</span>'
 
     ident = html.escape(info["identity"])
     ckey = "".join(info["colors"])
     ident_line = ident if ident == ckey or not ckey else f"{ident} ({ckey})"
 
-    spine_colors = info["colors"] or ["C"]
-    spine_segs = "".join(
-        f'<span style="flex:1;background:{PIP_STYLE[w][0]}"></span>' for w in spine_colors
-    )
-    spine = f'<div class="spine">{spine_segs}</div>'
+    meta_parts = []
+    if opts["show_identity"]:
+        meta_parts.append(f'<span class="ident">{ident_line}</span>')
+    if opts["show_format"]:
+        meta_parts.append(f'<span>{html.escape(info["format"])}</span>')
+    if opts["show_count"]:
+        meta_parts.append(f'<span>{info["count"]} cards</span>')
+    meta_html = '<span class="dot">•</span>'.join(meta_parts)
+
+    spine = ""
+    if opts["show_spine"]:
+        spine_colors = info["colors"] or ["C"]
+        spine_segs = "".join(
+            f'<span style="flex:1;background:{PIP_STYLE[w][0]}"></span>' for w in spine_colors
+        )
+        spine = f'<div class="spine">{spine_segs}</div>'
 
     url = DECK_URL.format(id=info["id"])
-    uri = qr_data_uri(url) if use_qr else None
+    uri = qr_data_uri(url) if opts["use_qr"] else None
     if uri:
         qr_block = f'<div class="qr"><img src="{uri}" alt="deck QR"></div>'
         qr_caption = f'#{info["id"]}'          # small human-readable fallback
@@ -350,34 +461,36 @@ def render_card(info, use_art, show_price, use_qr):
         qr_block = ""
         qr_caption = f'archidekt.com/decks/{info["id"]}'
 
+    foot_txt_parts = []
+    if opts["show_owner"] and info["owner"]:
+        foot_txt_parts.append(f'<span>{html.escape(info["owner"])}</span>')
+    foot_txt_parts.append(f'<span class="src">{qr_caption}</span>')
+
+    inner_class = "inner halo" if opts["text_halo"] else "inner"
+
     return f"""
       <div class="card">
         {art_layer}
-        <div class="wash" style="background:{grad}"></div>
         {spine}
-        <div class="inner">
+        <div class="{inner_class}">
           <div class="top">
             {bracket or '<div class="bracket empty"></div>'}
-            <div class="pips">{pip_html(info["colors"])}</div>
+            {pips}
           </div>
           <div class="mid">
-            <div class="cmd">{html.escape(cmd)}</div>
-            <div class="dname">{html.escape(info["name"])}</div>
+            <div class="cmd">{html.escape(big_text)}</div>
+            <div class="dname">{html.escape(small_text)}</div>
+            {desc}
           </div>
           <div class="bot">
             {tags}
             <div class="meta">
-              <span class="ident">{ident_line}</span>
-              <span class="dot">•</span>
-              <span>{html.escape(info["format"])}</span>
-              <span class="dot">•</span>
-              <span>{info["count"]} cards</span>
+              {meta_html}
               {price}
             </div>
             <div class="foot">
               <div class="foot-txt">
-                <span>{html.escape(info["owner"])}</span>
-                <span class="src">{qr_caption}</span>
+                {"".join(foot_txt_parts)}
               </div>
               {qr_block}
             </div>
@@ -482,9 +595,8 @@ def card_css(m, page_size):
   .art {{
     position: absolute; inset: 0;
     background-size: cover; background-position: center;
-    opacity: 0.45; filter: saturate(1.1);
+    filter: saturate(1.1);                 /* opacity set inline per-card (user-adjustable) */
   }}
-  .wash {{ position: absolute; inset: 0; opacity: 0.20; }}
   .card::after {{                          /* readability veil */
     content:""; position:absolute; inset:0;
     background: linear-gradient(180deg, rgba(255,255,255,.30), rgba(255,255,255,.55) 55%, rgba(255,255,255,.80));
@@ -514,8 +626,9 @@ def card_css(m, page_size):
   .pip {{
     width: 17px; height: 17px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 800; border: 0.6px solid rgba(0,0,0,.18);
+    border: 0.6px solid rgba(0,0,0,.18);
   }}
+  .pip svg {{ display: block; }}
 
   .mid {{ flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 6px 0; }}
   .cmd {{
@@ -527,6 +640,16 @@ def card_css(m, page_size):
   }}
   .dname {{ margin-top: 5px; font-size: 9.5px; font-style: italic; color: #46433d;
             display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }}
+  .desc {{ margin-top: 4px; font-size: 7.8px; line-height: 1.25; color: #57534a;
+           display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }}
+
+  /* text-halo option: a soft white glow behind every letter, so text stays
+     readable regardless of what's showing through the art behind it. */
+  .halo, .halo * {{
+    text-shadow:
+      0 0 2px #fff, 0 0 2px #fff, 0 0 2px #fff, 0 0 2px #fff,
+      0 0 5px #fff, 0 0 5px #fff, 0 0 8px #fff;
+  }}
 
   .bot {{ display: flex; flex-direction: column; gap: 5px; }}
   .tags {{ display: flex; flex-wrap: wrap; gap: 3px; }}
@@ -560,19 +683,19 @@ def card_css(m, page_size):
 """
 
 
-def sheets_html(cards, use_art, show_price, use_qr, m):
+def sheets_html(cards, opts, m):
     """Render <div class="sheet">...</div> blocks, 9 cards per sheet."""
     crop_html = cropmarks_html(m)
     sheets = []
     for i in range(0, len(cards), 9):
         chunk = cards[i:i + 9]
-        body = "".join(render_card(c, use_art, show_price, use_qr) for c in chunk)
+        body = "".join(render_card(c, opts) for c in chunk)
         sheets.append(f'<div class="sheet">{crop_html}{body}</div>')
     return "\n".join(sheets)
 
 
-def render_html(cards, paper="letter", use_art=True, show_price=False, use_qr=True,
-                gap_mm=3.0, card_scale=1.0):
+def render_html(cards, paper="letter", opts=None, gap_mm=3.0, card_scale=1.0):
+    opts = card_opts(opts)
     page_size = "A4" if paper == "a4" else "letter"
     m = layout_metrics(paper, gap_mm, card_scale)
 
@@ -590,7 +713,7 @@ def render_html(cards, paper="letter", use_art=True, show_price=False, use_qr=Tr
     Cut along the light borders, using the faint dashed guide lines in the
     gaps to keep interior cuts straight.
   </div>
-  {sheets_html(cards, use_art, show_price, use_qr, m)}
+  {sheets_html(cards, opts, m)}
 </body></html>"""
 
 
@@ -605,9 +728,6 @@ def main():
     ap.add_argument("--out", default="deck_cards.html", help="Output HTML file.")
     ap.add_argument("--all-formats", action="store_true", help="Include non-Commander decks.")
     ap.add_argument("--a4", action="store_true", help="Lay out for A4 paper.")
-    ap.add_argument("--no-art", action="store_true", help="Disable faded featured-art backgrounds.")
-    ap.add_argument("--price", action="store_true", help="Show approximate TCGplayer price.")
-    ap.add_argument("--no-qr", action="store_true", help="Use a printed link instead of a QR code.")
     ap.add_argument("--gap", type=float, default=3.0,
                     help="Space between cards in mm (auto-fit to page; default 3).")
     ap.add_argument("--card-scale", type=float, default=1.0,
@@ -615,6 +735,26 @@ def main():
     ap.add_argument("--gui", action="store_true",
                     help="Launch the local browser GUI instead of running from the command line.")
     ap.add_argument("--port", type=int, default=8765, help="Port for --gui's local server.")
+
+    # Card content/style -- one flag per DEFAULT_CARD_OPTS entry.
+    ap.add_argument("--art-opacity", type=float, default=DEFAULT_CARD_OPTS["art_opacity"],
+                    help="Featured-art background opacity, 0-1 (default 0.45). 0 disables it.")
+    ap.add_argument("--no-art", action="store_true", help="Shorthand for --art-opacity 0.")
+    ap.add_argument("--text-halo", action="store_true",
+                    help="Add a white glow behind card text for readability over busy art.")
+    ap.add_argument("--feature-deck-name", action="store_true",
+                    help="Make the deck name the big title instead of the commander(s).")
+    ap.add_argument("--no-spine", action="store_true", help="Hide the left-edge color spine.")
+    ap.add_argument("--no-pips", action="store_true", help="Hide the WUBRG mana-symbol pips.")
+    ap.add_argument("--no-bracket", action="store_true", help="Hide the EDH bracket badge.")
+    ap.add_argument("--no-tags", action="store_true", help="Hide deck tags.")
+    ap.add_argument("--no-identity", action="store_true", help="Hide the color-identity name.")
+    ap.add_argument("--no-format", action="store_true", help="Hide the format.")
+    ap.add_argument("--no-count", action="store_true", help="Hide the card count.")
+    ap.add_argument("--no-owner", action="store_true", help="Hide the deck owner.")
+    ap.add_argument("--price", action="store_true", help="Show approximate TCGplayer price.")
+    ap.add_argument("--description", action="store_true", help="Show the deck's Archidekt description.")
+    ap.add_argument("--no-qr", action="store_true", help="Use a printed link instead of a QR code.")
     args = ap.parse_args()
 
     if args.gui:
@@ -680,12 +820,26 @@ def main():
     if not cards:
         raise SystemExit("No usable decks fetched.")
 
+    opts = card_opts({
+        "art_opacity": 0.0 if args.no_art else args.art_opacity,
+        "text_halo": args.text_halo,
+        "feature": "deck" if args.feature_deck_name else "commander",
+        "show_spine": not args.no_spine,
+        "show_pips": not args.no_pips,
+        "show_bracket": not args.no_bracket,
+        "show_tags": not args.no_tags,
+        "show_identity": not args.no_identity,
+        "show_format": not args.no_format,
+        "show_count": not args.no_count,
+        "show_owner": not args.no_owner,
+        "show_price": args.price,
+        "show_description": args.description,
+        "use_qr": not args.no_qr,
+    })
     doc = render_html(
         cards,
         paper="a4" if args.a4 else "letter",
-        use_art=not args.no_art,
-        show_price=args.price,
-        use_qr=not args.no_qr,
+        opts=opts,
         gap_mm=args.gap,
         card_scale=args.card_scale,
     )

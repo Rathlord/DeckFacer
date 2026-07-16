@@ -9,7 +9,12 @@ const state = {
   slots: [],       // {token, id, status:'loading'|'ok'|'error', info, cardHtml, error}
   flags: {
     paper: "letter", gap: 3.0, cardScale: 1.0,
-    useArt: true, showPrice: false, useQr: true,
+    artOpacity: 45,        // percent, 0-100 -- converted to 0-1 when sent to the server
+    textHalo: false,
+    feature: "commander",  // "commander" | "deck" -- which name is the big title
+    showSpine: true, showPips: true, showBracket: true, showTags: true,
+    showDescription: false, showIdentity: true, showFormat: true, showCount: true,
+    showOwner: true, showPrice: false, useQr: true,
     allFormats: false, out: "deck_cards.html",
   },
   layout: null,     // {m, page_size, css, crop_html}
@@ -53,8 +58,25 @@ function showToast(msg, kind = "ok", ms = 4000) {
   toastTimer = setTimeout(() => { el.hidden = true; }, ms);
 }
 
+// Every render_card() option the server understands, mapped from this
+// state's camelCase fields to the Python opts dict's snake_case keys.
 function cardFlags() {
-  return { use_art: state.flags.useArt, show_price: state.flags.showPrice, use_qr: state.flags.useQr };
+  return {
+    art_opacity: state.flags.artOpacity / 100,
+    text_halo: state.flags.textHalo,
+    feature: state.flags.feature,
+    show_spine: state.flags.showSpine,
+    show_pips: state.flags.showPips,
+    show_bracket: state.flags.showBracket,
+    show_tags: state.flags.showTags,
+    show_description: state.flags.showDescription,
+    show_identity: state.flags.showIdentity,
+    show_format: state.flags.showFormat,
+    show_count: state.flags.showCount,
+    show_owner: state.flags.showOwner,
+    show_price: state.flags.showPrice,
+    use_qr: state.flags.useQr,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -92,6 +114,7 @@ async function rerenderCards() {
   });
   renderGrid();
 }
+const debouncedRerenderCards = debounce(rerenderCards, 150);
 
 // ---------------------------------------------------------------------------
 // Slot resolution
@@ -369,8 +392,8 @@ async function generate() {
     const res = await apiPost("/api/render", {
       slots: tokens,
       flags: {
+        ...cardFlags(),
         paper: state.flags.paper, gap: state.flags.gap, card_scale: state.flags.cardScale,
-        use_art: state.flags.useArt, show_price: state.flags.showPrice, use_qr: state.flags.useQr,
         all_formats: state.flags.allFormats, out: state.flags.out,
       },
     });
@@ -408,9 +431,32 @@ function initToolbar() {
     state.flags.allFormats = e.target.checked;
     renderGrid();
   });
-  $("useArt").addEventListener("change", (e) => { state.flags.useArt = e.target.checked; rerenderCards(); });
-  $("showPrice").addEventListener("change", (e) => { state.flags.showPrice = e.target.checked; rerenderCards(); });
-  $("useQr").addEventListener("change", (e) => { state.flags.useQr = e.target.checked; rerenderCards(); });
+
+  $("artOpacity").addEventListener("input", (e) => {
+    state.flags.artOpacity = parseInt(e.target.value, 10);
+    $("artOpacityVal").textContent = state.flags.artOpacity;
+    debouncedRerenderCards();
+  });
+  $("feature").addEventListener("change", (e) => { state.flags.feature = e.target.value; rerenderCards(); });
+
+  // Every other card-content checkbox just flips a state field and asks the
+  // server to re-render from its cache -- none of these touch page/grid
+  // geometry, so no /api/layout call is needed.
+  const wireToggle = (id, key) => {
+    $(id).addEventListener("change", (e) => { state.flags[key] = e.target.checked; rerenderCards(); });
+  };
+  wireToggle("textHalo", "textHalo");
+  wireToggle("showSpine", "showSpine");
+  wireToggle("showPips", "showPips");
+  wireToggle("showBracket", "showBracket");
+  wireToggle("showTags", "showTags");
+  wireToggle("showDescription", "showDescription");
+  wireToggle("showIdentity", "showIdentity");
+  wireToggle("showFormat", "showFormat");
+  wireToggle("showCount", "showCount");
+  wireToggle("showOwner", "showOwner");
+  wireToggle("showPrice", "showPrice");
+  wireToggle("useQr", "useQr");
 
   $("outName").addEventListener("input", (e) => {
     state.flags.out = e.target.value.trim() || "deck_cards.html";
