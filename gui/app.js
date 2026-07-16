@@ -351,6 +351,14 @@ function importPaste() {
   bulkAdd(lines);
 }
 
+function resetSheet() {
+  if (state.slots.length && !confirm(`Remove all ${state.slots.length} deck(s) from the sheet?`)) return;
+  state.slots = [];
+  state.editingIndex = null;
+  renderGrid();
+  showToast("Sheet cleared.", "ok");
+}
+
 async function generate() {
   const tokens = state.slots.map((s) => s.token).filter(Boolean);
   if (!tokens.length) { showToast("Add at least one deck first.", "err"); return; }
@@ -409,6 +417,7 @@ function initToolbar() {
   });
 
   $("generateBtn").addEventListener("click", generate);
+  $("resetBtn").addEventListener("click", resetSheet);
   $("importUserBtn").addEventListener("click", importUser);
   $("importUser").addEventListener("keydown", (e) => { if (e.key === "Enter") importUser(); });
   $("importPasteBtn").addEventListener("click", importPaste);

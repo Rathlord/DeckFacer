@@ -250,57 +250,67 @@ input[type="range"] {
 }
 
 /* placeholder / edit slots -- same box size as a real .card via CSS vars
-   injected server-side, so they line up exactly in the grid. */
+   injected server-side, so they line up exactly in the grid.
+
+   IMPORTANT: these sit inside .sheet, which is deliberately a white/cream
+   "paper" surface (it's a preview of the actual printed page), not the dark
+   app chrome around it. Every color below is chosen for a light background,
+   not var(--ink)/var(--ink-dim)/var(--danger) etc, which assume dark. */
 .slot-placeholder, .slot-edit, .slot-error {
   width: var(--card-w); height: var(--card-h);
   border-radius: 3px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 6px; text-align: center; padding: 10px;
   font-size: 11px;
+  color: #33302b;
 }
 .slot-placeholder {
-  border: 1.5px dashed rgba(255, 255, 255, 0.22);
-  color: var(--ink-dim);
+  border: 1.5px dashed rgba(28, 27, 25, 0.25);
+  color: #6b665d;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(28, 27, 25, 0.03);
   transition: background .12s ease, border-color .12s ease;
 }
 .slot-placeholder:hover {
-  background: rgba(124, 156, 255, 0.10);
+  background: rgba(124, 156, 255, 0.12);
   border-color: var(--accent);
-  color: var(--ink);
+  color: #1c1b19;
 }
 .slot-placeholder .plus { font-size: 22px; line-height: 1; color: var(--accent); }
 
 .slot-edit {
   border: 1.5px solid var(--accent);
-  background: rgba(124, 156, 255, 0.10);
+  background: #fdfdff;
   padding: 12px;
 }
 .slot-edit textarea {
   width: 100%; height: 70%;
   font-size: 11px;
+  background: #fff;
+  color: #1c1b19;
+  border-color: rgba(28, 27, 25, 0.2);
 }
-.slot-edit .hint { color: var(--ink-dim); font-size: 10px; }
+.slot-edit textarea::placeholder { color: #9a938a; }
+.slot-edit .hint { color: #8a8478; font-size: 10px; }
 
 .slot-loading {
   width: var(--card-w); height: var(--card-h);
   display: flex; align-items: center; justify-content: center;
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(28, 27, 25, 0.15);
+  background: rgba(28, 27, 25, 0.04);
 }
 .spinner {
   width: 22px; height: 22px; border-radius: 50%;
-  border: 2.5px solid rgba(255, 255, 255, 0.18);
+  border: 2.5px solid rgba(28, 27, 25, 0.15);
   border-top-color: var(--accent);
   animation: spin .8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .slot-error {
-  border: 1.5px solid rgba(255, 107, 122, 0.5);
-  background: rgba(255, 107, 122, 0.08);
-  color: var(--danger);
+  border: 1.5px solid rgba(197, 58, 74, 0.5);
+  background: rgba(197, 58, 74, 0.08);
+  color: #a72e40;
   cursor: pointer;
 }
 .slot-error .err-msg { font-size: 10px; opacity: .85; }
