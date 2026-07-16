@@ -64,20 +64,20 @@ def _resolve(token, flags=None, use_cache=True):
     did = core.parse_deck_id(token)
     if not did:
         return {"ok": False, "token": token, "error": "Couldn't find a deck ID in that."}
-    if not (use_cache and did in _CACHE):
-        try:
+    try:
+        if not (use_cache and did in _CACHE):
             _throttle()
             deck = core.fetch_json(core.API_DECK.format(id=did))
             _CACHE[did] = core.extract_info(deck)
-        except urllib.error.HTTPError as e:
-            return {"ok": False, "token": token, "id": did,
-                    "error": f"HTTP {e.code} (private or not found?)"}
-        except Exception as e:  # noqa
-            return {"ok": False, "token": token, "id": did, "error": str(e)}
-    info = _CACHE[did]
-    use_art, show_price, use_qr = _card_flags(flags)
-    card_html = core.render_card(info, use_art, show_price, use_qr)
-    return {"ok": True, "token": token, "id": did, "info": info, "card_html": card_html}
+        info = _CACHE[did]
+        use_art, show_price, use_qr = _card_flags(flags)
+        card_html = core.render_card(info, use_art, show_price, use_qr)
+        return {"ok": True, "token": token, "id": did, "info": info, "card_html": card_html}
+    except urllib.error.HTTPError as e:
+        return {"ok": False, "token": token, "id": did,
+                "error": f"HTTP {e.code} (private or not found?)"}
+    except Exception as e:  # noqa -- one bad deck must never kill the whole batch response
+        return {"ok": False, "token": token, "id": did, "error": str(e)}
 
 
 def _layout_payload(paper, gap_mm, card_scale):
@@ -119,7 +119,24 @@ class Handler(BaseHTTPRequestHandler):
         return json.loads(raw or b"{}")
 
     # -- routing ------------------------------------------------------------ #
+    # do_GET/do_POST are thin wrappers: an uncaught exception partway through a
+    # handler (as happened when render_card() could throw inside _resolve())
+    # kills the connection before any response is sent, which shows up in the
+    # browser as an opaque "NetworkError" with no indication of what broke.
+    # Catching here guarantees the client always gets a real HTTP response.
     def do_GET(self):
+        try:
+            self._do_GET()
+        except Exception as e:  # noqa
+            self._send_json({"error": f"server error: {e}"}, 500)
+
+    def do_POST(self):
+        try:
+            self._do_POST()
+        except Exception as e:  # noqa
+            self._send_json({"error": f"server error: {e}"}, 500)
+
+    def _do_GET(self):
         path = self.path.split("?", 1)[0]
 
         if path in STATIC_FILES:
@@ -145,7 +162,7 @@ class Handler(BaseHTTPRequestHandler):
 
         self._send_json({"error": "not found"}, 404)
 
-    def do_POST(self):
+    def _do_POST(self):
         path = self.path.split("?", 1)[0]
         try:
             data = self._read_json()
@@ -170,9 +187,12 @@ class Handler(BaseHTTPRequestHandler):
             use_art, show_price, use_qr = _card_flags(flags)
             cards, missing = {}, []
             for did in ids:
-                if did in _CACHE:
+                if did not in _CACHE:
+                    missing.append(did)
+                    continue
+                try:
                     cards[did] = core.render_card(_CACHE[did], use_art, show_price, use_qr)
-                else:
+                except Exception:  # noqa -- same guard as _resolve(): never kill the whole response
                     missing.append(did)
             self._send_json({"cards": cards, "missing": missing})
             return

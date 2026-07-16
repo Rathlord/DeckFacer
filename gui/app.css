@@ -1,4 +1,9 @@
 :root {
+  /* Tells the browser this page is dark-themed, so native form-control
+     chrome (text cursor color, autofill, etc.) picks light-on-dark instead
+     of guessing from the OS theme -- belt-and-suspenders alongside the
+     explicit background/color on inputs below. */
+  color-scheme: dark;
   --bg: #0e1016;
   --ink: #e9ebf3;
   --ink-dim: #9aa0b4;

@@ -110,27 +110,46 @@ async function resolveSlot(index, token) {
   renderGrid();
 }
 
+// Chunked rather than one request for the whole list: a username import can
+// mean 100+ decks, and the server paces uncached Archidekt fetches ~0.4s
+// apart to be polite -- bundled into a single request that's a minute-plus
+// held open, all-or-nothing if anything along the way trips. Chunking bounds
+// each request's blast radius and gives incremental progress/results instead
+// of one long silent wait.
+const BULK_CHUNK_SIZE = 15;
+
 async function bulkAdd(tokens) {
-  const startIndex = state.slots.length;
-  tokens.forEach((t) => state.slots.push({ token: t, status: "loading" }));
-  renderGrid();
-  showToast(`Fetching ${tokens.length} deck(s)...`, "ok", 60000);
-  try {
-    const res = await apiPost("/api/bulk", { tokens, flags: cardFlags() });
-    res.results.forEach((r, i) => {
-      const idx = startIndex + i;
-      if (r.ok) {
-        state.slots[idx] = { token: tokens[i], id: r.id, status: "ok", info: r.info, cardHtml: r.card_html };
-      } else {
-        state.slots[idx] = { token: tokens[i], status: "error", error: r.error || "Unknown error" };
-      }
-    });
-    const okCount = res.results.filter((r) => r.ok).length;
-    showToast(`Added ${okCount}/${tokens.length} deck(s).`, okCount === tokens.length ? "ok" : "err");
-  } catch (err) {
-    showToast(`Import failed: ${err}`, "err");
+  const total = tokens.length;
+  let okTotal = 0;
+  showToast(`Fetching ${total} deck(s)...`, "ok", 60000);
+  for (let i = 0; i < tokens.length; i += BULK_CHUNK_SIZE) {
+    const chunk = tokens.slice(i, i + BULK_CHUNK_SIZE);
+    const startIndex = state.slots.length;
+    chunk.forEach((t) => state.slots.push({ token: t, status: "loading" }));
+    renderGrid();
+    try {
+      const res = await apiPost("/api/bulk", { tokens: chunk, flags: cardFlags() });
+      res.results.forEach((r, j) => {
+        const idx = startIndex + j;
+        if (r.ok) {
+          state.slots[idx] = { token: chunk[j], id: r.id, status: "ok", info: r.info, cardHtml: r.card_html };
+          okTotal += 1;
+        } else {
+          state.slots[idx] = { token: chunk[j], status: "error", error: r.error || "Unknown error" };
+        }
+      });
+    } catch (err) {
+      // Whole chunk request failed (network error, etc) -- mark just this
+      // chunk's slots as failed rather than leaving them spinning forever,
+      // and keep going with the remaining chunks.
+      chunk.forEach((t, j) => {
+        state.slots[startIndex + j] = { token: t, status: "error", error: String(err) };
+      });
+    }
+    renderGrid();
+    showToast(`Fetching decks... ${Math.min(i + BULK_CHUNK_SIZE, total)}/${total}`, "ok", 60000);
   }
-  renderGrid();
+  showToast(`Added ${okTotal}/${total} deck(s).`, okTotal === total ? "ok" : "err");
 }
 
 function removeSlot(index) {
