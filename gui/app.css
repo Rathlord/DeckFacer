@@ -17,8 +17,14 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
-  color: var(--ink);
+  /* !important: the live preview injects the print file's own stylesheet
+     (card_css()) into #card-style so sheet/card rendering matches the PDF
+     exactly. That stylesheet also sets html/body's background+color (it's
+     designed to stand alone as the whole print document) and loads after
+     this one, so without !important here it would win and repaint the
+     entire app -- not just the sheets -- in the print theme. */
+  background: var(--bg) !important;
+  color: var(--ink) !important;
   font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   min-height: 100vh;
 }

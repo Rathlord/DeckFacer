@@ -474,6 +474,9 @@ def card_css(m, page_size):
     overflow: hidden;
     border: 0.6px solid #c9c6bf;         /* cut guide */
     background: #fbfaf6;
+    color: #1c1b19;                      /* self-contained: don't rely on inherited
+                                             body color, which the GUI's own dark
+                                             theme also sets on html/body */
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }}
   .art {{
