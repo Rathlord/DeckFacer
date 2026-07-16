@@ -36,9 +36,9 @@ Opens `http://127.0.0.1:<port>/` in the default browser.
 
 ## What each card shows
 Commander(s) or deck name as the big title (toggle which via `feature`), EDH
-bracket badge (1-5 w/ name), WUBRG mana-symbol pips (small PNGs cropped from a
-reference mana-symbol sheet the user supplied, embedded as data URIs — see
-`PIP_ICON_PNG` in Code map, not hand-drawn lookalikes), color-identity name
+bracket badge (1-5 w/ name), WUBRG mana-symbol pips (real vector mana symbols
+extracted from a reference SVG the user supplied, embedded as data URIs — see
+`PIP_ICON_SVG` in Code map), color-identity name
 (guild/shard/wedge/"Non-X"/Five-Color), format, card count,
 deck tags, an optional short description, owner, a QR code linking to the deck,
 and a left-edge color spine so a stack of decks is sortable by color. Every one
@@ -114,17 +114,26 @@ behind all card text) for legibility over busy art.
   `render_html()` specifically so the GUI can embed byte-identical CSS in its
   live preview. `sheets_html()` — chunks cards into 9-up `.sheet` blocks.
   `render_html()` — assembles the full print document from the above.
-- `PIP_ICON_PNG` — the 6 WUBRG+C mana-symbol images (64x64, palette-optimized
-  PNG, ~1KB each), cropped from a reference sprite sheet the user supplied and
-  embedded as base64 data URIs. `pip_css()` emits one `.pip-{color} {
-  background-image: url(...) }` rule per color in `card_css()`'s stylesheet,
-  so each icon's bytes appear once in the document regardless of how many
-  pips/cards reference it -- `pip_html()` just emits `<span class="pip
-  pip-W">` etc. If the source sheet's layout ever needs re-cropping: it's a
-  10-col grid, cell size 108x110px; W/U/B/R/G are row 0 cols 4-8, the C
-  (colorless) stand-in is row 2 col 7 (a gray/tan circle, matching MTG's
-  artifact/colorless color coding -- the sheet has no single generic
-  colorless symbol, that row is per-color Phyrexian-mana-styled icons).
+- `PIP_ICON_SVG` — the 6 WUBRG+C mana-symbol icons, embedded as URL-encoded
+  SVG data URIs. `pip_css()` emits one `.pip-{color} { background-image:
+  url(...) }` rule per color in `card_css()`'s stylesheet, so each icon's
+  markup appears once in the document regardless of how many pips/cards
+  reference it -- `pip_html()` just emits `<span class="pip pip-W">` etc.
+  W/U/B/R/G are extracted from a reference mana-symbol SVG the user supplied
+  (https://gist.github.com/pca2/f67415d88d4ac7ea5354efc0a3faf440, a
+  slightlymagic.net community asset, real vector art matching the official
+  glyphs) -- coordinates translated to a local 0-110 viewBox, path data
+  otherwise untouched. An earlier version tried raster crops from a sprite
+  sheet the user found first; that looked "clunky" with visible cropping
+  seams, which this vector version doesn't have. Extracting from that gist
+  is non-trivial if it ever needs redoing: colored circles are normally
+  `<circle>` elements but Green's is authored as a `<path>` (an Illustrator
+  export quirk), and top-level `<g>` blocks aren't spatially ordered, so
+  matching by grid position (like the sprite sheet) doesn't work -- match by
+  each color's known circle fill hex instead (see git history around
+  2026-07-16 for the extraction script). C (colorless) isn't in that sheet
+  (it predates the real colorless-mana symbol) -- it's a small hand-drawn
+  ring matching Magic's actual glyph, at the same 110x110 scale as the rest.
 - `qr_data_uri()` — segno SVG data-URI QR (falls back to text link if segno absent).
 
 ## GUI architecture (`gui_server.py`, `gui/`)
