@@ -228,6 +228,16 @@ def extract_description(deck):
     return text.strip()
 
 
+def extract_tags(deck):
+    """`deckTags` entries are objects ({"name": "Merfolk", "id": ..., ...}),
+    not plain strings -- discovered when this silently changed upstream and
+    started crashing render_card()'s tag chips. Defensively also accept plain
+    strings, in case this drifts back or differs across API versions."""
+    tags = deck.get("deckTags") or []
+    names = [t.get("name", "") if isinstance(t, dict) else str(t) for t in tags]
+    return [n for n in names if n]
+
+
 # --------------------------------------------------------------------------- #
 # Parsing a deck into the fields we print
 # --------------------------------------------------------------------------- #
@@ -292,7 +302,7 @@ def extract_info(deck):
         "commanders": commanders,
         "colors": colors,               # list like ["W","U"]
         "identity": identity,           # "Azorius"
-        "tags": deck.get("deckTags") or [],
+        "tags": extract_tags(deck),
         "count": count,
         "owner": (deck.get("owner") or {}).get("username", ""),
         "featured": deck.get("featured") or "",
@@ -620,6 +630,9 @@ def card_css(m, page_size):
       0 0 2px #fff, 0 0 2px #fff, 0 0 2px #fff, 0 0 2px #fff,
       0 0 5px #fff, 0 0 5px #fff, 0 0 8px #fff;
   }}
+  /* .bnum is already white-on-solid-black -- a white glow there just
+     blurs the number instead of helping it read. */
+  .halo .bnum {{ text-shadow: none; }}
 
   .bot {{ display: flex; flex-direction: column; gap: 5px; }}
   .tags {{ display: flex; flex-wrap: wrap; gap: 3px; }}
