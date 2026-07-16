@@ -482,12 +482,12 @@ def card_css(m, page_size):
   .art {{
     position: absolute; inset: 0;
     background-size: cover; background-position: center;
-    opacity: 0.16; filter: saturate(1.1);
+    opacity: 0.45; filter: saturate(1.1);
   }}
-  .wash {{ position: absolute; inset: 0; opacity: 0.30; }}
+  .wash {{ position: absolute; inset: 0; opacity: 0.20; }}
   .card::after {{                          /* readability veil */
     content:""; position:absolute; inset:0;
-    background: linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.86) 55%, rgba(255,255,255,.95));
+    background: linear-gradient(180deg, rgba(255,255,255,.30), rgba(255,255,255,.55) 55%, rgba(255,255,255,.80));
   }}
   .spine {{
     position: absolute; left: 0; top: 0; bottom: 0; width: 0.11in; z-index: 3;
