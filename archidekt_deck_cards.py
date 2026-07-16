@@ -62,6 +62,7 @@ except ImportError:
 API_DECK = "https://archidekt.com/api/decks/{id}/"
 DECK_URL = "https://archidekt.com/decks/{id}"
 API_LIST = "https://archidekt.com/api/decks/v3/"
+API_USERS = "https://archidekt.com/api/users/"
 USER_AGENT = "deck-info-card-maker/1.0 (personal deck labeling script)"
 
 # Archidekt gives color identity as full names.
@@ -133,14 +134,34 @@ def parse_deck_id(token):
     return m.group(1) if m else None
 
 
+def resolve_user_id(username):
+    """Username -> numeric Archidekt user id (the deck-list endpoint needs the id).
+
+    NOTE: `?owner=<username>&ownerexact=true` on the v3 list endpoint used to
+    work but as of this writing is silently ignored -- it returns the
+    site-wide "most recent decks" feed regardless of the owner param,
+    instead of erroring or returning nothing. `?ownerId=<numeric id>` is the
+    one that actually filters. Since that's undocumented behavior that has
+    already drifted once, enumerate_user_decks() also double-checks each
+    result's owner rather than trusting the filter blindly.
+    """
+    params = urllib.parse.urlencode({"username": username})
+    try:
+        data = fetch_json(f"{API_USERS}?{params}")
+    except urllib.error.HTTPError as e:
+        raise SystemExit(f"Could not look up Archidekt user '{username}' (HTTP {e.code}).")
+    results = data.get("results") or []
+    if not results:
+        raise SystemExit(f"No Archidekt user named '{username}' found.")
+    return results[0]["id"]
+
+
 def enumerate_user_decks(username, commander_only):
     """Return a list of deck IDs for a user's PUBLIC decks via the list API."""
+    user_id = resolve_user_id(username)
     ids, page = [], 1
     while True:
-        params = urllib.parse.urlencode({
-            "owner": username, "ownerexact": "true",
-            "pageSize": 50, "page": page,
-        })
+        params = urllib.parse.urlencode({"ownerId": user_id, "pageSize": 50, "page": page})
         url = f"{API_LIST}?{params}"
         try:
             data = fetch_json(url)
@@ -154,6 +175,16 @@ def enumerate_user_decks(username, commander_only):
         if not results:
             break
         for d in results:
+            owner = d.get("owner") or {}
+            if owner.get("id") != user_id:
+                # The owner filter has silently no-op'd before (see docstring
+                # above) -- bail rather than pulling in the entire site feed.
+                raise SystemExit(
+                    f"Archidekt's deck list for '{username}' returned a deck owned by "
+                    f"'{owner.get('username', '?')}' instead -- the API's owner filter "
+                    f"isn't behaving as expected right now. Stopping rather than risk "
+                    f"pulling in unrelated decks. Try --file with explicit deck URLs instead."
+                )
             if commander_only and d.get("deckFormat") != 3:
                 continue
             ids.append(str(d["id"]))

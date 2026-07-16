@@ -36,9 +36,20 @@ color-identity name (guild/shard/wedge/"Non-X"/Five-Color), format, card count,
 deck tags, owner, a QR code linking to the deck, and a left-edge color spine so a
 stack of decks is sortable by color.
 
-## Archidekt API notes (undocumented but stable; be polite — light use, link back)
+## Archidekt API notes (undocumented and NOT stable — see 2026-07-16 breakage below; be polite — light use, link back)
 - Single deck JSON: `https://archidekt.com/api/decks/{id}/`
-- Public deck list for a user: `https://archidekt.com/api/decks/v3/?owner=<name>&ownerexact=true&pageSize=50&page=N`
+- Username -> numeric user id: `https://archidekt.com/api/users/?username=<name>` (also returns `deckCount`).
+- Public deck list for a user: `https://archidekt.com/api/decks/v3/?ownerId=<numeric id>&pageSize=50&page=N`.
+  **`?owner=<username>&ownerexact=true` (what this doc said until 2026-07-16) is
+  now silently ignored** — it returns the site-wide "most recent decks" feed
+  regardless of the owner param, rather than erroring or returning nothing.
+  Discovered because a GUI username-import spawned hundreds of strangers'
+  decks. `enumerate_user_decks()` now resolves the id first via `/api/users/`
+  and cross-checks every returned deck's `owner.id` against it, aborting
+  loudly instead of silently absorbing an unfiltered feed if this endpoint's
+  behavior drifts again. `pageSize` also appears to be ignored server-side
+  (observed page size ~60 regardless of the requested value) — harmless since
+  pagination termination relies on the `next` field, not on page size.
 - Canonical deck URL (for QR): `https://archidekt.com/decks/{id}`
 - Relevant top-level fields: `name`, `deckFormat` (3 = Commander), `edhBracket`
   (1-5 or null), `deckTags`, `owner.username`, `featured` (art-crop URL),
