@@ -82,58 +82,30 @@ PIP_STYLE = {
     "C": ("#9a938a", "#ffffff"),
 }
 
-# Small inline mana-symbol icons (sun/droplet/skull/flame/tree/hex), 24x24
-# viewBox, drawn as plain geometric shapes rather than lookalikes of WotC's
-# actual glyphs. Icon fill uses currentColor (so it follows the pip's own
-# `color`); the two icons with a two-tone "cutout" (skull's eyes/nose/teeth,
-# flame's inner tongue) take {bg} as their cutout fill, formatted in per pip
-# since that's a fixed per-color literal, not something CSS can express here.
-PIP_ICONS = {
+# Official-style mana-symbol icons for the WUBRG pips, sourced from a
+# reference sprite sheet the user provided (not hand-drawn lookalikes).
+# Each is a small (64x64) palette-optimized PNG, ~1KB, embedded as a data URI
+# once per color in card_css() -- referenced by class (.pip-W etc.) so the
+# encoded bytes appear once per document regardless of how many pips use it,
+# not once per <span>.
+PIP_ICON_PNG = {
     "W": (
-        '<svg viewBox="0 0 24 24" width="11" height="11">'
-        '<g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">'
-        '<line x1="12" y1="7.4" x2="12" y2="2.8"/>'
-        '<line x1="15.25" y1="8.75" x2="18.5" y2="5.5"/>'
-        '<line x1="16.6" y1="12" x2="21.2" y2="12"/>'
-        '<line x1="15.25" y1="15.25" x2="18.5" y2="18.5"/>'
-        '<line x1="12" y1="16.6" x2="12" y2="21.2"/>'
-        '<line x1="8.75" y1="15.25" x2="5.5" y2="18.5"/>'
-        '<line x1="7.4" y1="12" x2="2.8" y2="12"/>'
-        '<line x1="8.75" y1="8.75" x2="5.5" y2="5.5"/>'
-        '</g><circle cx="12" cy="12" r="3.2" fill="currentColor"/></svg>'
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABABAMAAABYR2ztAAAAGFBMVEX///////39//7//v78/Of49tqqqpgLDArA3mhIAAADpklEQVR42mWVwW/jRBTGf28cCWelbWacCraVII6XAxyQEnpFiBU3/gv+Qk4cOXNAJdFyQUhNXFZqg9h4xgXahMUeDmM7TjsnZ96Xb75533tvhN76eA7ATzkYRLMChOOVUedR1QMM+tELL5cRL58ve3uPGdr19AgxxcUKLuASG312jXfHDGI8FwZwI3eZ6EVa54+OkPErAJ9Y/Pb1R3nDELVh+fpTAK8+yGN59vxX2AGgWoKxAeBuajVwOmv3I4Bo9uK/VwD483gDwHC0OWK4DjlE6Vb8WLLsoOH2C9Mm0m/igDjJbzsGZbRxR4qAMbrbqpqEe91PzCxqANHF6VcBjQaZdBTVTDQKagQRDUgOJA5vvbVW5ssg0qy/wZ3Ve6A4B7kXdX5+NoThzW6HAsYgGItFO0B7oxGTTSGaMYD0FEAyUy9HvVtYL/PX3cWWiEEFpQ4HFKuccb1EwRsNIZGjUrf/r3OjEXTLEAJJBpCJbndmjkFITWOAtla0yQBxDdmA+Sngw69CEu/X006ohog/PgdidkMolImHQ7+PgU0MyO1OyRiA1SrH32mAxPYuq1v/jLHYNHynDgrtAJkdGXzX+mgprkNWYdDIsyJ1l4QJuVbptgx2zx3gs4mhA4ibeE3S1lDq4M6M07J3WqJ0UxkKrybOT48aU5xMAeMAJbIep6UGyscNrHRo/xFJ8ijU2D4qcYq2jXk6FBIHCmT9BOCA+mcno2B3Q+iPQW/1lTMO5YEc/Mod6s1r4G/MlQgRf6W4M4rdv+/fxS1gf8PDDoabSis8nKx9KVZ1Yt3IrfJQD24AIEUtXksrwv+uaZqZPLhphHLKpKH4M+3Nvs7uBFQdCL7X0mJ/mam+cLN2YBffwng6deHmAyp3sDldF0gWBqkGtu7DgaSH87xk/mj0qlmlYNF102KBwNWRN8ovtg4oNbzVAHXZAfyyWqrQZDYDIgxgtQUHDrbpEgUs4KXusZ7Y4rvOunDNpBc3Tlb5ly4MBVBgK1dYC77EAmqC0TjAchUG6b7U1m4erPCeiiHOY6R8sYl/9IlFgSSVGKORtrg04L32aaNBk3apOAFsU1/bg0hVuUO1+utQ0H6BhDm5v7/95Lemc9wZRUj2bvsuXllQ4GG5tS1DIAD7Wh8eFAGbxADPRqthkPDPzfr2ANDvHkoTg0/u9yH+w0Z6L44HqoUDGYUD7DZzT1/e07mWWgDs5aEfowPgobge7WPw7pL2UTx63L2leNqm/wOOBHCy15jQRgAAAABJRU5ErkJggg=="
     ),
     "U": (
-        '<svg viewBox="0 0 24 24" width="11" height="11">'
-        '<polygon points="12,3 5.92,14 18.08,14" fill="currentColor"/>'
-        '<circle cx="12" cy="14" r="6.2" fill="currentColor"/></svg>'
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABABAMAAABYR2ztAAAAGFBMVEX///////39///X5vHC2OnB1+m/1uciJykf3qGFAAADbklEQVR42m2V0Y/bRBDGfzs5oVxRz7MJEhXSJY77gECqSq78+/wJ5Q4qEDzUdVKptIjLbnKi5zvpPDx47dgt+2TPfjvzzXwzu47BKryXxZt4XbW/Hou4wb40SE5JAWUPOBkAGgqabUHa/5+Vp0hF++29cvTgTJpt4RSLTQUivrUfQxQ4na2AMkgpGIQRQKv1bNWUQMGDXi1jsk+68x/WL+z2Pc5P/wqTJXUNNYCkDMv1vIkoFsA3hws/9uBvn35jkWkEnuynjjv9eK/udFojgNO9PF0CDpDtErCbF9rWUAAkv1hAS/t8tQGwuVZ65OAuNimmvNI9AMHnkdgCTOelJk6P15Y+J4olD7J5TnJQvE3bFrK1j6lQi5OY/PKwBkvObrRoKgTY5iFaTAxoko+A70i6jgDn66H6vmkBuuo75pUOAPEwA04QKWCWRSDroc5bxLQEAb/srFsFZN+hbKUgNA5oOe4/6bCtgiCzmCI//oEkyGBNWD2C+hSL94eWwhenNbTdMHVBqLKuZdNZOx73FSIuT5aH1NTzzTHTBUKeokong4s9wIF0pJz17J715RLyE1xUA1j0DT6/VHAe8P/spOnM+/6c6+tRgeQe8OC2R/J9DKWSqiPsj4BBHsfJOh/MuWsGd0LeVXeo9PN+IBHadnRvRwIcZZO+aMdti27RW2VQtH5dYcdapSxsSMHwVXKgIrscIMsHgDNk34ZsVEbRUzsvcW1SDUgzcp4mItI2icZKBBs3SatFG1GdCtWGMG7EqiNt5hCWDsLIxSHr06kQ2NknZXh2pV0NcoQYP2X51Y8Q3wAxooJZBRyqAUJBHcQmgjShwvvPqvGrgS0pK0GyQwSy0b41QPGmVdN2KHY2LqYC1a5p5Q4aIRvFCAp2/gswwU2Z2Cl3fw7l+qOmvivfRxAaC9c5uGykN04tWHtXT+/4cgpf3097wE4jtcWsvUgj9jojHi6PDraAhv62lydMplNb9i5+XhHdx3fOYguwmMXvav7ePWoR1wer6/xlFWL/Xhx0r9H87/4UbLdd1nH224fbYTMXFIDf7ZUwP4v54fq1lKM36/Zuvox3s1WU7y0ij18KYQg4de+4+TbehuJs8+Tg/n0pENxoXgqcv0hCXIaoUDodv922+0k9EGy30c/Hv1ps89dFAJpK1EpJ0vwHE2poLS7F7GQAAAAASUVORK5CYII="
     ),
     "B": (
-        '<svg viewBox="0 0 24 24" width="11" height="11">'
-        '<ellipse cx="12" cy="9" rx="7" ry="6" fill="currentColor"/>'
-        '<polygon points="7,12 17,12 15.5,19 8.5,19" fill="currentColor"/>'
-        '<ellipse cx="9" cy="8.8" rx="1.7" ry="1.8" fill="{bg}"/>'
-        '<ellipse cx="15" cy="8.8" rx="1.7" ry="1.8" fill="{bg}"/>'
-        '<polygon points="11.3,10.6 12.7,10.6 12,13" fill="{bg}"/>'
-        '<rect x="9.3" y="17.2" width="0.9" height="1.8" fill="{bg}"/>'
-        '<rect x="11.6" y="17.2" width="0.9" height="1.8" fill="{bg}"/>'
-        '<rect x="13.9" y="17.2" width="0.9" height="1.8" fill="{bg}"/></svg>'
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABABAMAAABYR2ztAAAAGFBMVEX//////v////3+/v7Oysa6sqx+eXULDQsDQNFJAAADAUlEQVR42nWVX2/bNhTFf5cyBudhCSmjQzugnZS+zp0cf4L1ew/9AnPqxduAAYOlABvWPcxikwFJO0jcAymKSmI+6B8P7z338FxKSMbaALTdliOjYrFek1XpN0lfFgXdrmJzLMCwdF09ESGrYKNWGFp3mVVEHhLnu6sLbQCcbTfrzSMO1W5VDs+u/eHi8gHgdfNWJ5kP9WnIoXyGdf29BgfiYXmxMx4w87fuwoAYA+SutZAvBWdjBHYlSOkXSW5AXl8VPjgA3307RyJHTrRFvvpcRw7ZzxpMqo6GnCpyWD57KGpukbNDiJCpf/XAPioB5LdZSPHGgNE2BexFIy+rANgViJYUcFClgcU2AFZgoE8SqBIBqQpQqKUBjeh6UgQF8qUGRXmrEaA8m7BAYLEDhbv2GkjuHgIEyCi/1rzwAk61cPcye/5B0eupMePw6ipu9BGLCuQ7VHbNkQgCQqUQ0IBr00kbcmAzd2E4mePqD/dxP119Zw3c3csXd6ryEVq0i0rV4BofYXCUs8OFILpX/lQrj/MEAo0m0JDBk5K6YLhiQcNWJazDzSVoVaiRwgCY1Isalzx5IoQqJo60TwB8KTjtgLMhkIsAS240kGuHJQcQUyS9aTXGf28XDjkfc/V6NqqG35vRMNansF78IbG18RQBLGoL4PZt1MiG6doCbGfUhVenLRM7tgG2RWVDyD6p/zA8Z4WKOkoi8cdx91QX+0V4JHtbNYpX07aeAHpQ3KaL5HzSBDdNNaORsVGkxCsaKGxfbdVohsejBRT9ccA/RYOiHC3koLfJ6xWg2O9joS24pNJ2OKM2bVgek/lSWhtMq95P/Bb756fBUX3XBBUs0H8MUtRv9vu+8UfxpY1mdg1pAO/JbunN4VzYMgvUy/ejq28OFpwVt7eDZQ6TPw7swQ0ucHtw7yqbtJGiUKvJCff7TdhYH6HvdV9P5nfxbxvuf+tfTmQ+SPjH7puhibN4PJtfr+d8mtPe//Xnfy9/0wEwG+Oen/5IVtFt1Yqub0Lr/Q+ywSqblYmY6wAAAABJRU5ErkJggg=="
     ),
     "R": (
-        '<svg viewBox="0 0 24 24" width="11" height="11">'
-        '<polygon points="12.5,2 9,7 7.5,10.5 7,14 7.5,18 9.5,20.5 12.5,21.5 '
-        '15.5,20.5 17.5,18 18,14 17,10 14.5,6" fill="currentColor"/>'
-        '<polygon points="12.5,9 11,12 10.7,15 11.5,17.5 13,18.5 14.5,17 15,14 14,11" '
-        'fill="{bg}"/></svg>'
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABABAMAAABYR2ztAAAAGFBMVEX///////39//7uybfim3rhmHd9V0YMDQuQ7nJWAAADw0lEQVR42m2VTW/bRhCGn1kLlZgC5iwDJFYK1BRzaZtTjP6S/uicGhQ9FQVqUb7ENtBwZ32oqbbh9EBKpprMZXdn3p2d7xUmCt/uQh0BTy0NwBaABU80bGlIKYZ6xpwDiJogMmz5AoVadILFOV+Om3ieaYAtaZPP7aE+saE2tdxEUYje7STIwY6z6X64+7ppin4FRRGlu78QYpoB/n5xdnVhPX3f71d5HdN+KTwBNlb+c1Xm+GwdI0uTx0o/3Gl+PACCkt+8zJtn66IoYlwl9ur7Xo4A0f2b2jA39iukKFK0V60n7SeA9uGKfaO3j8lWBRSr25gvfr/sD4B+/4Psm7jqi+IxPVtBsbwvi6/uDCCAaFWXlSIlKAZQueRKDnGQ9Tey/x543Htu1gBysfPo+36MpD786GeAm1SvIXVhgyCiLqWxQLwBhS5lNdGuFY8qlzelB/XJBrImb029u75uReMOKg/5UkcjgyLDzgUPGnNTJnMQFW92BgEVXFtSKdB4FWspHVCrRWPUAG9NhlzuskqXm5rABiBazDUQwoODqOPmsRUAcUBcUEXCoKoOokA6N0hl3gCCeNhBULGp7tyQhCeoAEpUFRZs4qxAO0/E9i1ARA0I8xL2JCmqDUwAagg7Pan+aKLaTgozeAingOQgyaaTIgH3lI4cB3PTbZrOxv8UIFFtk3RrgFAJAZGDaGy69FqnrnFAj80rZSJJ9NSoizMpHmRxaE7PDXRJmohHG7k6KAsgJtwfroCYIuD6SYCxs8LB5bdTdACbViAcAGUz82THaMJY9j4qmHnr8FwBz46N80HKs5mCTg+rQwoGHL0C8Jtpc0O2QcNnL3Q+hQBnwMJg80kF3Y2O8FYzKKHG8FlRpDILwJB9Q6oIZqBPL3iWMo7ABwViKMekzCjXgO/yZih3EEKLzdN9aRVAVzVqHhgWeHly//mZAh42cDMAi53bac3oVBwMdMBi2OToXxreJPfzLYFd62ZfkPtNeWMQkDRl/n/yrXZmcIYuQyHrz/R/EOuWVWJBLnd1PhVCSlKe/+wGiyj+0Zh70rVA9PynJCDgqEn7JP/UxhgjnLfD8UP55aeZlUFIIPybHeCsgNKKi4fjG7KOr4ok5+8uDGCRkFi/j/OM4knlj2zHUUy/vP/ufv0kvrX9X78t+yNgRfDwMlNA6vvbdFcUy3eHHB968z314TsVxa9znU4AWrbjeBwfuf5Vh9m32Per2/ziFllNNnxoL25N5j9vTIhLVUcgDW0uDeKYwsUh+k78OKr1h81gh+bmPwbCxW4JS+vHAAAAAElFTkSuQmCC"
     ),
     "G": (
-        '<svg viewBox="0 0 24 24" width="11" height="11">'
-        '<polygon points="12,3 6,11 18,11" fill="currentColor"/>'
-        '<polygon points="12,8 5,17 19,17" fill="currentColor"/>'
-        '<rect x="10.7" y="17" width="2.6" height="4" fill="currentColor"/></svg>'
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABABAMAAABYR2ztAAAAGFBMVEX///////39//7d59ekwZZ9knMNEQ8KDQzE4+PIAAADVklEQVR42nWVO3fjNhCFv4F8zlIujAE352S9hUMyVbo8/v9f8CZliiVlF7GbEIALGy6iSQHRovxAJXEuZgZz7wWE4xoCgM271Tdk/QfXsT8JnwJaZe9g5IPVLpW69zMMY2gVmCf6ZOkNoGMTFIA4Z5/iG4D7Lbwkm9Ox1c0hLL8f42ztSdMJwO3/UECGUANb/rYTwE+fL2t8u20q4r9AOQJk8wvAzz6V0j4VgPBnUwEOEO0BxCeQ1EsIIL+uSsh5D/AZAHXNV20SzV1NsQHC0EhoylcASgmxtE9FPt0sJZxTGYYh+EPSCKmHto7tDK5+IPgo/YoAE5DOEuCQWyUkTNKKoazQukOJHvEgcZ0BBbmoAB9AFDuh3oJC6AAnTsHSOhqAhx7aXe3hXfWY0yohpwEsnwYPMpCrDhwKYu+kOFR1QUH0VVQUFNqboXc3wEu8/kggmgcQObAZlkMkQKq0NHfgmRwwLCzILMicah4fEKN1PeJPDmHjUc8d6hSppSWo9UuPFmPKCntxcBCwH3Md2iu7Ll1JjJNmD4SslpajqoNodbaDogmke53BiFUkXQJozScAq7N0CxOKJSKYR3QRgCOcLTOUUMcvSS5u/WH8RnTgfIAcxzHXSv5bVCySu0OJkOo546QAOobaTD3vGSgaUcI8ZYC960lKyqbEShYJiLHVCEjuIz5GjyRIaXOurjEoocmXu64gIWm8u4vnfvtPecRt3Jftl6agk/NZmwLPfrwvkLeP99whLhJJisUx+8rKmAD28wRpZw4sSw4RG3MG8OnFopbBXcCkOu/Aoi6aXun7TJPux8pG7MKpg8xIzoBYfWkZWHt47sDdTqstKZ2UeABct9qR7I13ontl3BOAAs74EDDXO5jpowS37MCxv0qnzlvWfj/C4EamerNLaD1gLSsfwhm4GUB6qimlj1W0f/nDRSpXrkGGsI3bApRWuKQwb0tTCA709hqCxRgsIBBlkIDdjEfddZseoO1jMElonBP/xt3Lbc9NlUC0iXnyNknPvEscAabTgb2UYt7P42Q7lfWLU37MAShFIonC0/fn+6asH7WHixyg8AQUbJLH51NAL6NIs8x4gk+pOHvpAdi779d1QHG+PjyaA69ffm2HYUDaDtcte/8HLeZ7F/SpRPoAAAAASUVORK5CYII="
     ),
     "C": (
-        '<svg viewBox="0 0 24 24" width="11" height="11">'
-        '<polygon points="12,3 19,8 19,16 12,21 5,16 5,8" fill="currentColor"/></svg>'
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABABAMAAABYR2ztAAAAGFBMVEX///////3+/v7W0c66s6y6squ4satNSUduHGytAAADs0lEQVR42oWVT3PbNhDFf4A8GSkHEaAPSdwxTVE9ZTpprE/QTj9/bTWXXhoKoi/NIcJSF0udBNsDSFmeZFpc+AcPu293H3YnjMuUrwSA8g0Hnn6fXmqRhXEQ09apfAtYbBp/WaeJpk3cdekEmAzPZrP88a1rnU391ZW86P1sdjgHlI8/LGvwm1KPj5/eko4MRGx2lMrfEkSpHc64drlUN5jOgJvJMlkUuuyvXTZbf8bB9j+9EDhgDm8ezYHjm90iPe71ZKFq3oECYkBAcd0qpJOLpms6jAccuOw8PayMGwAmNVWdHe6GzEQh3TozAvZNN1B29VPiH/L7BabwVR+9RoBL0GLrAK2utz6CtTWX2zHm2gF24QGV7Ty7MPufB8M2daCn6tjGAZa0QIb95hYuUpv3JS0EuIByWwDGFxMHcGnbZiDqioClm2v+7Ib0+1UoRAU6Z8Gqr/PG7vYU4rscc7EKWOt8ZqVLIA4F6moApa7VulIAjDj4+hH0Hqiy2Lb02D47kAnohwWQBMqcWjt3TI6/HAFelVN2Xl+SXrYvp+aFE2YcH/+eWj+WAe1AgGYDQ0BOBkVhOkg1gA2xEmznQdICZ4cgDAg65DjkmgNutDCvRz2aDKxOos1R4lBiNuZilf+A6YNlvGXpJj8VkLztuRnvRTYfOVsWjad78R/r4nR9xXqSOxPMaMiNSeGJw3PA/7hI8fmp9OyAYDPLCiwRJLtyQ/AKdleM6PAszIFrbcUAiGCSDudMOHEzYlUB9gHel9m9mU8gAMapOPsU3CQYwG7p3qMouH3A2Ng5IFWjEmG+GLVBrLFOjAO/X0PZOiB1DtYbEXAKdp4CgF6DWQVgfwtqHKBpDzZItrxfg1mB+RXY1YDpCwFrNwQAroHcdfjaBUD9RsCmm6G92PsxR/ohtyTZObAkqcF7RzUi7mrbe6DqtW2ts59HMWeEfm5GSwHvJ9NPcnmYznIK/7ziy7oEPU5n0/7jIXeYKi5OPUow4/lUCWAuYPvwnogpspRRybXsvgiAFfT6j1Ee+/AknLQpYow7C3S/+2+l1qU+jL06Xa+Lc5VlBu18kD3QPTj1zySdui9d9TQv9KZfTc1sejCvZ2oOYPqv96/C2cTp23WmngCMSrWL4XwkcfPXHe3GOxCY76u7bWObs6k3O6gc3vqW6T8qfTm/W79GXDyRxEeb7igbgNJ93IzN+HzylvNt4zw2Rd2FJoVvZ7cvNjRAxMztdwDgzTxgHEbVBb4DMIWAqeV5p/kXzEOVKd6luhsAAAAASUVORK5CYII="
     ),
 }
 
@@ -371,14 +343,17 @@ def card_opts(overrides=None):
 def pip_html(colors):
     if not colors:
         colors = ["C"]
-    out = []
-    for w in colors:
-        bg, fg = PIP_STYLE[w]
-        icon = PIP_ICONS[w].format(bg=bg)
-        out.append(
-            f'<span class="pip" style="background:{bg};color:{fg}">{icon}</span>'
-        )
-    return "".join(out)
+    return "".join(f'<span class="pip pip-{w}"></span>' for w in colors)
+
+
+def pip_css():
+    """One background-image rule per WUBRG+C color, keyed by class so the
+    embedded PNG data URI appears once in the stylesheet no matter how many
+    pips/cards reference it."""
+    return "\n  ".join(
+        f'.pip-{w} {{ background-image: url("{uri}"); }}'
+        for w, uri in PIP_ICON_PNG.items()
+    )
 
 
 def qr_data_uri(url):
@@ -625,10 +600,10 @@ def card_css(m, page_size):
   .pips {{ display: flex; gap: 3px; }}
   .pip {{
     width: 17px; height: 17px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
+    background-size: cover; background-position: center;
     border: 0.6px solid rgba(0,0,0,.18);
   }}
-  .pip svg {{ display: block; }}
+  {pip_css()}
 
   .mid {{ flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 6px 0; }}
   .cmd {{

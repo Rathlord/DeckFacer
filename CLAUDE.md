@@ -36,9 +36,10 @@ Opens `http://127.0.0.1:<port>/` in the default browser.
 
 ## What each card shows
 Commander(s) or deck name as the big title (toggle which via `feature`), EDH
-bracket badge (1-5 w/ name), WUBRG mana-symbol pips (simple geometric icons —
-sun/droplet/skull/flame/tree/hex — not lookalikes of WotC's actual glyphs),
-color-identity name (guild/shard/wedge/"Non-X"/Five-Color), format, card count,
+bracket badge (1-5 w/ name), WUBRG mana-symbol pips (small PNGs cropped from a
+reference mana-symbol sheet the user supplied, embedded as data URIs — see
+`PIP_ICON_PNG` in Code map, not hand-drawn lookalikes), color-identity name
+(guild/shard/wedge/"Non-X"/Five-Color), format, card count,
 deck tags, an optional short description, owner, a QR code linking to the deck,
 and a left-edge color spine so a stack of decks is sortable by color. Every one
 of these is independently togglable (`show_spine`, `show_pips`, etc. in
@@ -113,11 +114,17 @@ behind all card text) for legibility over busy art.
   `render_html()` specifically so the GUI can embed byte-identical CSS in its
   live preview. `sheets_html()` — chunks cards into 9-up `.sheet` blocks.
   `render_html()` — assembles the full print document from the above.
-- `PIP_ICONS` — inline SVG mana-symbol icons (24x24 viewBox, plain geometric
-  shapes, `fill="currentColor"` so they follow the pip's own color; the
-  two-tone ones -- skull's eye/nose/teeth cutouts, flame's inner tongue --
-  take a `{bg}` format placeholder for the pip's background color, since that
-  can't be expressed as `currentColor`).
+- `PIP_ICON_PNG` — the 6 WUBRG+C mana-symbol images (64x64, palette-optimized
+  PNG, ~1KB each), cropped from a reference sprite sheet the user supplied and
+  embedded as base64 data URIs. `pip_css()` emits one `.pip-{color} {
+  background-image: url(...) }` rule per color in `card_css()`'s stylesheet,
+  so each icon's bytes appear once in the document regardless of how many
+  pips/cards reference it -- `pip_html()` just emits `<span class="pip
+  pip-W">` etc. If the source sheet's layout ever needs re-cropping: it's a
+  10-col grid, cell size 108x110px; W/U/B/R/G are row 0 cols 4-8, the C
+  (colorless) stand-in is row 2 col 7 (a gray/tan circle, matching MTG's
+  artifact/colorless color coding -- the sheet has no single generic
+  colorless symbol, that row is per-color Phyrexian-mana-styled icons).
 - `qr_data_uri()` — segno SVG data-URI QR (falls back to text link if segno absent).
 
 ## GUI architecture (`gui_server.py`, `gui/`)
