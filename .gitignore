@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+deck_cards.html
+decks.txt
